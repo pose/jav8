@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="jav8" default="dist" basedir="." xmlns:cpptasks="antlib:net.sf.antcontrib.cpptasks">
+	<property name="src.dir" value="${basedir}/src" />
+	<property name="test.dir" value="${basedir}/test" />
+	<property name="out.dir" value="${basedir}/build" />
+	<property name="classes.dir" value="${out.dir}/classes" />
+	<property name="obj.dir" value="${out.dir}/obj" />
+	<property name="jni.file" value="${out.dir}/jav8.dll"/>
+	<property name="jni.dir" value="${basedir}/jni"/>
+	<property name="dist.dir" value="${basedir}/dist" />
+	<property name="cc.mode" value="release" />
+	
+	<condition property="is_win">
+		<os family="windows" />
+	</condition>
+	<condition property="is_unix">
+		<os family="unix" />
+	</condition>	
+	
+	<property file="${basedir}/build.properties" />
+	
+	<target name="init_win" if="is_win">
+		<property name="cc.compiler" value="msvc"/>
+	</target>
+	
+	<target name="init_unix" if="is_unix">
+		<property name="cc.compiler" value="gcc"/>
+	</target>
+	
+	<target name="clean">
+		<delete dir="${out.dir}" />		
+		<delete dir="${dist.dir}" />
+	</target>
+	<target name="prepare">
+		<mkdir dir="${classes.dir}"/>
+		<mkdir dir="${obj.dir}" />
+	</target>
+	<target name="compile" depends="clean, prepare">
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false">
+			<include name="**/*.java"/>
+		</javac>
+		<copy todir="${classes.dir}/META-INF">		
+			<fileset dir="${src.dir}/META-INF" />
+		</copy>
+	</target>
+	<target name="jni" depends="compile">
+		<mkdir dir="${jni.dir}"/>
+		<javah verbose="yes" classpath="${classes.dir}" outputfile="${jni.dir}/jav8.h">
+			<class name="lu.flier.script.V8ScriptEngineFactory"/>
+		</javah>
+		<cpptasks:cc name="${cc.compiler}" objdir="${obj.dir}/${cc.mode}" outfile="${jni.dir}" 
+			runtime="static" link="static" outtype="static" 
+			multithreaded="true" optimize="speed">			
+			<fileset dir="${jni.dir}" includes="*.cpp"/>
+			<includepath>
+				<path path="${os.JAVA_HOME}/include"/>							
+			</includepath>
+		</cpptasks:cc>
+	</target>
+	<target name="jar" depends="compile, jni">
+		<mkdir dir="${dist.dir}"/>
+		<jar destfile="${dist.dir}/jav8.jar" basedir="${classes.dir}">
+			<include name="**/*.class"/>
+			<include name="META-INF/**"/>
+		</jar>
+	</target>
+	<target name="test" depends="jar">
+	</target>
+	<target name="dist" depends="jar">
+	</target>	
+</project>
