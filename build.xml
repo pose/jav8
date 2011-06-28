@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="jav8" default="dist" basedir="." xmlns:cpptasks="antlib:net.sf.antcontrib.cpptasks">
+	<property name="project.name" value="jav8"/>
+	<property name="project.version" value="0.1"/>
+	<property name="project.mode" value="release" />
+	
 	<property name="src.dir" value="${basedir}/src" />
 	<property name="test.dir" value="${basedir}/test" />
 	<property name="out.dir" value="${basedir}/build" />
 	<property name="classes.dir" value="${out.dir}/classes" />
-	<property name="obj.dir" value="${out.dir}/obj" />
-	<property name="jni.file" value="${out.dir}/jav8.dll"/>
+	<property name="obj.dir" value="${out.dir}/objs" />	
+	<property name="bin.dir" value="${out.dir}/bin/${project.mode}" />
 	<property name="jni.dir" value="${basedir}/jni"/>
 	<property name="dist.dir" value="${basedir}/dist" />
-	<property name="cc.mode" value="release" />
 	
 	<condition property="is_win">
 		<os family="windows" />
@@ -21,15 +24,16 @@
 	
 	<target name="init_win" if="is_win">
 		<property name="cc.compiler" value="msvc"/>
+		<property name="jni.file" value="${out.dir}/${project.name}.dll"/>
 	</target>
 	
 	<target name="init_unix" if="is_unix">
 		<property name="cc.compiler" value="gcc"/>
+		<property name="jni.file" value="${out.dir}/${project.name}.so"/>
 	</target>
 	
 	<target name="clean">
-		<delete dir="${out.dir}" />		
-		<delete dir="${dist.dir}" />
+		<delete file="${dist.dir}/*.jar" />
 	</target>
 	<target name="prepare">
 		<mkdir dir="${classes.dir}"/>
@@ -48,7 +52,7 @@
 		<javah verbose="yes" classpath="${classes.dir}" outputfile="${jni.dir}/jav8.h">
 			<class name="lu.flier.script.V8ScriptEngineFactory"/>
 		</javah>
-		<cpptasks:cc name="${cc.compiler}" objdir="${obj.dir}/${cc.mode}" outfile="${jni.dir}" 
+		<cpptasks:cc name="${cc.compiler}" objdir="${obj.dir}/${project.mode}" outfile="${jni.dir}" 
 			runtime="static" link="static" outtype="static" 
 			multithreaded="true" optimize="speed">			
 			<fileset dir="${jni.dir}" includes="*.cpp"/>
@@ -57,10 +61,12 @@
 			</includepath>
 		</cpptasks:cc>
 	</target>
-	<target name="jar" depends="compile, jni">
-		<mkdir dir="${dist.dir}"/>
-		<jar destfile="${dist.dir}/jav8.jar" basedir="${classes.dir}">
+	<target name="jar">
+		<mkdir dir="${dist.dir}"/>		
+		<jar destfile="${dist.dir}/${project.name}-jsr223-${project.version}.jar" basedir="${classes.dir}">
 			<include name="**/*.class"/>
+			<include name="**/*.dll"/>
+			<include name="**/*.so"/>
 			<include name="META-INF/**"/>
 		</jar>
 	</target>

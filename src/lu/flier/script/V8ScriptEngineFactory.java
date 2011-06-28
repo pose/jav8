@@ -9,6 +9,11 @@ import javax.script.ScriptEngineFactory;
 @SuppressWarnings("serial")
 public class V8ScriptEngineFactory implements ScriptEngineFactory
 {
+    static
+    {
+        System.loadLibrary("jav8");
+    }
+
     private static List<String> names;
     private static List<String> mimeTypes;
     private static List<String> extensions;
@@ -137,5 +142,4 @@ public class V8ScriptEngineFactory implements ScriptEngineFactory
     {
         return new V8ScriptEngine(this);
     }
-
 }

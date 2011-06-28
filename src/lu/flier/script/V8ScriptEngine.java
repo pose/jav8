@@ -10,11 +10,6 @@ import javax.script.ScriptException;
 
 public final class V8ScriptEngine extends AbstractScriptEngine
 {
-    static
-    {
-        System.loadLibrary("jav8");
-    }
-
     private final V8ScriptEngineFactory factory;
 
     V8ScriptEngine(V8ScriptEngineFactory factory)
