@@ -1,6 +1,7 @@
 #include "jav8.h"
 
 #include <cstring>
+#include <iostream>
 
 #include <v8.h>
 

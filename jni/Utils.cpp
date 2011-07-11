@@ -8,7 +8,7 @@ const std::string Env::GetString(jstring str)
 
   const char *s = m_env->GetStringUTFChars(str, &iscopy);
 
-  const std::string value = value;
+  const std::string value(s);
 
   m_env->ReleaseStringUTFChars(str, s);
 

@@ -15,18 +15,20 @@ import org.junit.Test;
 
 public class V8ScriptEngineTest
 {
+	private ScriptEngineManager mgr;
     private ScriptEngine eng;
 
     @Before
     public void setUp()
     {
-        ScriptEngineManager mgr = new ScriptEngineManager();
-        this.eng = mgr.getEngineByName("jav8");
+        this.eng = new ScriptEngineManager().getEngineByName("jav8");
     }
 
     @Test
     public void testV8ScriptEngineFactory()
-    {
+    {    	
+    	assertNotNull(this.eng);
+    	
         ScriptEngineFactory factory = this.eng.getFactory();
 
         assertNotNull(factory);

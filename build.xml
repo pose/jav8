@@ -17,6 +17,7 @@
 	<property name="bin.dir" value="${out.dir}/bin/${project.mode}" />
 	<property name="jni.dir" value="${basedir}/jni" />
 	<property name="dist.dir" value="${basedir}/dist" />
+	<property name="jar.file" value="${dist.dir}/${project.name}-jsr223-${project.version}.jar" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="junit4.path" value="${lib.dir}/junit-4.9b3.jar" />
 	
@@ -36,12 +37,10 @@
 	</path>
 	
 	<target name="init_win" if="is_win">
-		<echo>Use MS VisualStudio as Compiler</echo>
 		<property name="cc.compiler" value="msvc"/>
 	</target>
 	
 	<target name="init_unix" if="is_unix">
-		<echo>Use GCC as Compiler</echo>
 		<property name="cc.compiler" value="gcc"/>
 	</target>
 		
@@ -105,7 +104,7 @@
 	</target>
 	<target name="jar" depends="jni">
 		<mkdir dir="${dist.dir}"/>		
-		<jar destfile="${dist.dir}/${project.name}-jsr223-${project.version}.jar" basedir="${classes.dir}">
+		<jar destfile="${jar.file}" basedir="${classes.dir}">
 			<include name="**/*.class"/>
 			<include name="**/*.dll"/>
 			<include name="**/*.so"/>
@@ -116,7 +115,7 @@
 		<mkdir dir="${test.classes.dir}"/>
 		<mkdir dir="${test.report.dir}"/>
 		<javac srcdir="${test.dir}" destdir="${test.classes.dir}" 
-			includeantruntime="false" classpath="${junit4.path}">
+			includeantruntime="false" classpath="${junit4.path};${jar.file}">
 			<include name="**/*.java"/>
 		</javac>				
 		<junit printsummary="yes" haltonfailure="yes" fork="yes">
@@ -125,7 +124,7 @@
 			<formatter type="xml"/>
 			<test name="lu.flier.script.V8ScriptEngineTest" todir="${test.report.dir}" />
 			<classpath>
-				<pathelement location="${classes.dir}" />
+				<pathelement location="${jar.file}" />
 				<pathelement location="${test.classes.dir}" />
 				<pathelement location="${junit4.path}" />							
 				<pathelement path="${java.class.path}" />
