@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="jav8" default="dist" basedir="." xmlns:cpptasks="antlib:net.sf.antcontrib.cpptasks">
+	<property environment="env"/>
+	
 	<property name="project.name" value="jav8"/>
 	<property name="project.version" value="0.1"/>
 	<property name="project.mode" value="release" />
@@ -13,29 +15,29 @@
 	<property name="jni.dir" value="${basedir}/jni"/>
 	<property name="dist.dir" value="${basedir}/dist" />
 	
-	<condition property="is_win">
+	<condition property="is_win" value="true">
 		<os family="windows" />
 	</condition>
-	<condition property="is_unix">
+	<condition property="is_unix" value="true">
 		<os family="unix" />
 	</condition>	
 	
 	<property file="${basedir}/build.properties" />
 	
 	<target name="init_win" if="is_win">
+		<echo>Use MS VisualStudio as Compiler</echo>
 		<property name="cc.compiler" value="msvc"/>
-		<property name="jni.file" value="${out.dir}/${project.name}.dll"/>
 	</target>
 	
 	<target name="init_unix" if="is_unix">
+		<echo>Use GCC as Compiler</echo>
 		<property name="cc.compiler" value="gcc"/>
-		<property name="jni.file" value="${out.dir}/${project.name}.so"/>
 	</target>
-	
+		
 	<target name="clean">
 		<delete file="${dist.dir}/*.jar" />
 	</target>
-	<target name="prepare">
+	<target name="prepare" depends="init_win, init_unix">
 		<mkdir dir="${classes.dir}"/>
 		<mkdir dir="${obj.dir}" />
 	</target>
@@ -46,22 +48,39 @@
 		<copy todir="${classes.dir}/META-INF">		
 			<fileset dir="${src.dir}/META-INF" />
 		</copy>
-	</target>
+	</target>	
 	<target name="jni" depends="compile">
-		<mkdir dir="${jni.dir}"/>
+		<echo>Generating JNI header ...</echo>
+		<mkdir dir="${jni.dir}"/>		
 		<javah verbose="yes" classpath="${classes.dir}" outputfile="${jni.dir}/jav8.h">
 			<class name="lu.flier.script.V8ScriptEngineFactory"/>
 		</javah>
-		<cpptasks:cc name="${cc.compiler}" objdir="${obj.dir}/${project.mode}" outfile="${jni.dir}" 
-			runtime="static" link="static" outtype="static" 
-			multithreaded="true" optimize="speed">			
-			<fileset dir="${jni.dir}" includes="*.cpp"/>
+		
+		<echo>Building JNI library ...</echo>
+		<mkdir dir="${obj.dir}/${project.mode}"/>
+		<cpptasks:cc name="${cc.compiler}"
+			objdir="${obj.dir}/${project.mode}" outfile="${out.dir}/${project.name}" 
+			runtime="static" link="static" outtype="shared" 
+			multithreaded="true" optimize="speed" 
+			debug="true" exceptions="true" rtti="true">			
+			<fileset dir="${jni.dir}" includes="*.cpp"/>			
+
+			<compilerarg value="/GL" if="is_win"/>
+			<compilerarg value="/EHsc" if="is_win"/>
+			<linkerarg value="/LTCG" if="is_win"/>
+			
 			<includepath>
-				<path path="${os.JAVA_HOME}/include"/>							
+				<path>
+					<pathelement path="${env.JAVA_HOME}/include"/>							
+					<pathelement path="${env.JAVA_HOME}/include/win32"/>
+					<pathelement path="${env.V8_HOME}/include"/>
+				</path>
 			</includepath>
+			<libset libs="winmm,ws2_32"/>
+			<libset dir="${env.V8_HOME}" libs="v8"/>
 		</cpptasks:cc>
 	</target>
-	<target name="jar">
+	<target name="jar" depends="jni">
 		<mkdir dir="${dist.dir}"/>		
 		<jar destfile="${dist.dir}/${project.name}-jsr223-${project.version}.jar" basedir="${classes.dir}">
 			<include name="**/*.class"/>
