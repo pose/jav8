@@ -7,13 +7,18 @@
 	<property name="project.mode" value="release" />
 	
 	<property name="src.dir" value="${basedir}/src" />
-	<property name="test.dir" value="${basedir}/test" />
+	<property name="docs.dir" value="${basedir}/docs" />	
+	<property name="test.dir" value="${basedir}/test" />	
 	<property name="out.dir" value="${basedir}/build" />
 	<property name="classes.dir" value="${out.dir}/classes" />
+	<property name="test.classes.dir" value="${out.dir}/test-classes" />
+	<property name="test.report.dir" value="${out.dir}/test-report" />
 	<property name="obj.dir" value="${out.dir}/objs" />	
 	<property name="bin.dir" value="${out.dir}/bin/${project.mode}" />
-	<property name="jni.dir" value="${basedir}/jni"/>
+	<property name="jni.dir" value="${basedir}/jni" />
 	<property name="dist.dir" value="${basedir}/dist" />
+	<property name="lib.dir" value="${basedir}/lib" />
+	<property name="junit4.path" value="${lib.dir}/junit-4.9b3.jar" />
 	
 	<condition property="is_win" value="true">
 		<os family="windows" />
@@ -23,6 +28,12 @@
 	</condition>	
 	
 	<property file="${basedir}/build.properties" />
+
+	<path id="build.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
 	
 	<target name="init_win" if="is_win">
 		<echo>Use MS VisualStudio as Compiler</echo>
@@ -49,10 +60,18 @@
 			<fileset dir="${src.dir}/META-INF" />
 		</copy>
 	</target>	
+	<target name="docs" depends="compile">
+		<mkdir dir="${docs.dir}"/>
+		<javadoc packagenames="lu.flier" sourcepath="${src.dir}" destdir="${docs.dir}">
+			<fileset dir="${src.dir}">
+				<include name="**" />
+			</fileset>
+		</javadoc>
+	</target>	
 	<target name="jni" depends="compile">
 		<echo>Generating JNI header ...</echo>
 		<mkdir dir="${jni.dir}"/>		
-		<javah verbose="yes" classpath="${classes.dir}" outputfile="${jni.dir}/jav8.h">
+		<javah classpath="${classes.dir}" outputfile="${jni.dir}/jav8.h">
 			<class name="lu.flier.script.V8ScriptEngineFactory"/>
 		</javah>
 		
@@ -79,6 +98,10 @@
 			<libset libs="winmm,ws2_32"/>
 			<libset dir="${env.V8_HOME}" libs="v8"/>
 		</cpptasks:cc>
+		
+		<copy todir="${basedir}">
+			<fileset dir="${out.dir}" file="*.dll"/>
+		</copy>
 	</target>
 	<target name="jar" depends="jni">
 		<mkdir dir="${dist.dir}"/>		
@@ -90,7 +113,25 @@
 		</jar>
 	</target>
 	<target name="test" depends="jar">
+		<mkdir dir="${test.classes.dir}"/>
+		<mkdir dir="${test.report.dir}"/>
+		<javac srcdir="${test.dir}" destdir="${test.classes.dir}" 
+			includeantruntime="false" classpath="${junit4.path}">
+			<include name="**/*.java"/>
+		</javac>				
+		<junit printsummary="yes" haltonfailure="yes" fork="yes">
+			<env key="PATH" path="${java.library.path};${out.dir}"/>
+			<formatter type="plain" usefile="flase" />
+			<formatter type="xml"/>
+			<test name="lu.flier.script.V8ScriptEngineTest" todir="${test.report.dir}" />
+			<classpath>
+				<pathelement location="${classes.dir}" />
+				<pathelement location="${test.classes.dir}" />
+				<pathelement location="${junit4.path}" />							
+				<pathelement path="${java.class.path}" />
+			</classpath>
+		</junit>
 	</target>
-	<target name="dist" depends="jar">
+	<target name="dist" depends="test, docs">
 	</target>	
 </project>
