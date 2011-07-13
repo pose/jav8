@@ -72,6 +72,9 @@
 		<mkdir dir="${jni.dir}"/>		
 		<javah classpath="${classes.dir}" outputfile="${jni.dir}/jav8.h">
 			<class name="lu.flier.script.V8ScriptEngineFactory"/>
+			<class name="lu.flier.script.V8CompiledScript"/>
+			<class name="lu.flier.script.V8Context"/>
+			<class name="lu.flier.script.V8Object"/>
 		</javah>
 		
 		<echo>Building JNI library ...</echo>

@@ -1,21 +1,23 @@
 package lu.flier.script;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.util.List;
 
+import javax.script.Compilable;
+import javax.script.CompiledScript;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 import org.junit.Before;
 import org.junit.Test;
 
 public class V8ScriptEngineTest
 {
-	private ScriptEngineManager mgr;
     private ScriptEngine eng;
 
     @Before
@@ -45,24 +47,26 @@ public class V8ScriptEngineTest
         List<String> extensions = factory.getExtensions();
 
         assertTrue(extensions.contains("js"));
+        
+        assertEquals("Google V8", factory.getEngineName());
+        assertEquals("ECMAScript", factory.getLanguageName());
+        assertEquals("1.8.5", factory.getLanguageVersion());
+        
+        assertEquals("obj.say(Hello,World)", factory.getMethodCallSyntax("obj", "say", "Hello", "World"));
+        assertEquals("print(\"Hello world\")", factory.getOutputStatement("Hello world"));
+        assertEquals("s1;s2;", factory.getProgram("s1", "s2"));
     }
-
+    
     @Test
-    public void testEvalStringScriptContext()
+    public void testCompile() throws ScriptException
     {
-        fail("Not yet implemented");
+    	Compilable compiler = (Compilable) this.eng;
+    	
+    	CompiledScript script = compiler.compile("1+2");
+    	
+    	assertNotNull(script);
+    	
+    	assertEquals(this.eng, script.getEngine());
+    	assertEquals(3, script.eval());
     }
-
-    @Test
-    public void testCreateBindings()
-    {
-        fail("Not yet implemented");
-    }
-
-    @Test
-    public void testGetFactory()
-    {
-        fail("Not yet implemented");
-    }
-
 }

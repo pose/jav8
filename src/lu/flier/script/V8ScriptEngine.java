@@ -1,14 +1,19 @@
 package lu.flier.script;
 
+import java.io.IOException;
 import java.io.Reader;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
+import javax.script.SimpleBindings;
 
-public final class V8ScriptEngine extends AbstractScriptEngine
+public final class V8ScriptEngine extends AbstractScriptEngine implements Invocable, Compilable
 {
     private final V8ScriptEngineFactory factory;
 
@@ -26,32 +31,110 @@ public final class V8ScriptEngine extends AbstractScriptEngine
         scope.put(LANGUAGE, factory.getLanguageName());
         scope.put(LANGUAGE_VERSION, factory.getLanguageVersion());
     }
+    
+    private String readAll(Reader reader) throws IOException
+    {
+    	StringBuilder sb = new StringBuilder();
+    	
+    	char[] buffer = new char[8192];
+    	int read;
 
+    	while ((read = reader.read(buffer, 0, buffer.length)) > 0) {
+		    sb.append(buffer, 0, read);
+		}
+			
+		return sb.toString();
+    }    
+    
     @Override
     public Object eval(String script, ScriptContext context) throws ScriptException
     {
-        // TODO Auto-generated method stub
-        return null;
+    	if (script == null) throw new IllegalArgumentException("empty script");
+    	
+    	V8Context ctxt = new V8Context();
+    	
+    	ctxt.enter();
+    	
+        try {
+			return new V8CompiledScript(this, ctxt, script).eval(context);
+		} catch (Exception e) {
+			throw new ScriptException(e);
+		} finally {
+			ctxt.leave();
+		}
     }
 
     @Override
     public Object eval(Reader reader, ScriptContext context) throws ScriptException
-    {
-        // TODO Auto-generated method stub
-        return null;
+    {    	
+        try {
+			return eval(readAll(reader), context);
+		} catch (IOException e) {
+			throw new ScriptException(e);
+		}
     }
 
     @Override
     public Bindings createBindings()
     {
-        // TODO Auto-generated method stub
-        return null;
+    	return new SimpleBindings();
     }
 
     @Override
     public ScriptEngineFactory getFactory()
     {
         return this.factory;
-    }
+    }    
 
+	@Override
+	public CompiledScript compile(String script) throws ScriptException 
+	{		
+    	V8Context ctxt = new V8Context();
+    	
+    	ctxt.enter();
+    	
+		try {
+			return new V8CompiledScript(this, ctxt, script);
+		} catch (Exception e) {
+			throw new ScriptException(e); 
+		} finally {
+			ctxt.leave();
+		}
+	}
+
+	@Override
+	public CompiledScript compile(Reader script) throws ScriptException {
+		try {
+			return compile(readAll(script));
+		} catch (IOException e) {
+			throw new ScriptException(e);
+		}
+	}
+
+	@Override
+	public Object invokeMethod(Object thiz, String name, Object... args)
+			throws ScriptException, NoSuchMethodException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Object invokeFunction(String name, Object... args)
+			throws ScriptException, NoSuchMethodException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T> T getInterface(Class<T> clasz) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T> T getInterface(Object thiz, Class<T> clasz) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 }
