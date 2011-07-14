@@ -22,12 +22,36 @@ const std::string Env::GetString(jstring str)
   return value;
 }
 
+jobject Env::GetField(jobject obj, const char *name, const char *sig)
+{
+  jclass clazz = m_env->GetObjectClass(obj);
+  jfieldID fid = GetFieldID(clazz, name, sig);
+
+  return fid ? m_env->GetObjectField(obj, fid) : NULL;
+}
+
+jlong Env::GetLongField(jobject obj, const char *name)
+{
+  jclass clazz = m_env->GetObjectClass(obj);
+  jfieldID fid = GetFieldID(clazz, name, "J");
+
+  return m_env->GetLongField(obj, fid);
+}
+
+jobject Env::GetStaticField(jobject obj, const char *name, const char *sig)
+{
+  jclass clazz = m_env->GetObjectClass(obj);
+  jfieldID fid = GetStaticFieldID(clazz, name, sig);
+
+  return fid ? m_env->GetStaticObjectField(clazz, fid) : NULL;
+}
+
 void Env::Throw(const char *type, const char *msg)
 {
   m_env->ExceptionDescribe();
   m_env->ExceptionClear();
 
-  jclass exc = m_env->FindClass(type);
+  jclass exc = FindClass(type);
 
   if (exc)
   {
@@ -50,7 +74,7 @@ static struct {
   { "TypeError",      "java/lang/NoSuchMethodException" }
 };
 
-void Env::Throw(v8::TryCatch try_catch)
+bool Env::ThrowIf(v8::TryCatch try_catch)
 {
   if (try_catch.HasCaught())
   {
@@ -83,6 +107,8 @@ void Env::Throw(v8::TryCatch try_catch)
 
     Env::Throw(type, msg.c_str());
   }
+
+  return try_catch.HasCaught();
 }
 
 const std::string Env::Extract(v8::TryCatch& try_catch)
@@ -126,7 +152,100 @@ const std::string Env::Extract(v8::TryCatch& try_catch)
   return oss.str();
 }
 
-jobject Env::Wrap(v8::Handle<v8::Value> value)
+jobject Env::NewObject(const char *name, const char *sig, ...)
+{
+  jclass clazz = FindClass(name);
+  jmethodID cid = GetMethodID(clazz, "<init>", sig);
+  va_list args;
+
+  return m_env->NewObjectV(clazz, cid, args);
+}
+
+jobjectArray Env::NewObjectArray(const char *name, size_t size, jobject init)
+{
+  jclass clazz = FindClass(name);
+  return m_env->NewObjectArray(size, clazz, init);
+}
+
+jobject Env::NewBoolean(jboolean value)
+{
+  jclass clazz = FindClass("java/lang/Boolean");
+  jmethodID cid = GetMethodID(clazz, "<init>", "(Z)V");
+  jobject result = m_env->NewObject(clazz, cid, value);
+  m_env->DeleteLocalRef(clazz);
+  
+  return result;
+}
+
+jobject Env::NewInt(jint value)
+{
+  jclass clazz = FindClass("java/lang/Integer");
+  jmethodID cid = GetMethodID(clazz, "<init>", "(I)V");
+  jobject result = m_env->NewObject(clazz, cid, value);
+  m_env->DeleteLocalRef(clazz);
+
+  return result;
+}
+
+jobject Env::NewLong(jlong value)
+{
+  jclass clazz = FindClass("java/lang/Long");
+  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
+  jobject result = m_env->NewObject(clazz, cid, value);
+  m_env->DeleteLocalRef(clazz);
+
+  return result;
+}
+
+jobject Env::NewDouble(jdouble value)
+{
+  jclass clazz = FindClass("java/lang/Double");
+  jmethodID cid = GetMethodID(clazz, "<init>", "(D)V");
+  jobject result = m_env->NewObject(clazz, cid, value);
+  m_env->DeleteLocalRef(clazz);
+
+  return result;
+}
+
+jstring Env::NewString(v8::Handle<v8::String> str)
+{
+  return m_env->NewStringUTF(*v8::String::Utf8Value(str));
+}
+
+jobject Env::NewDate(v8::Handle<v8::Date> date)
+{
+  jclass clazz = FindClass("java/util/Date");
+  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
+  jlong value = floor(date->NumberValue() / 1000);
+  jobject result = m_env->NewObject(clazz, cid, value);
+  m_env->DeleteLocalRef(clazz);
+
+  return result;
+}
+
+jobject Env::NewV8Object(v8::Handle<v8::Object> obj)
+{
+  jclass clazz = FindClass("lu/flier/script/V8Object");
+  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
+  jlong value = (jlong) *v8::Persistent<v8::Object>::New(obj);
+  jobject result = m_env->NewObject(clazz, cid, value);
+  m_env->DeleteLocalRef(clazz);
+
+  return result;
+}
+
+jobject Env::NewV8Context(v8::Handle<v8::Context> ctxt)
+{
+  jclass clazz = FindClass("lu/flier/script/V8Context");
+  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
+  jlong value = (jlong) *v8::Persistent<v8::Context>::New(ctxt);
+  jobject result = m_env->NewObject(clazz, cid, value);
+  m_env->DeleteLocalRef(clazz);
+
+  return result;
+}
+
+jobject V8Env::Wrap(v8::Handle<v8::Value> value)
 {
   assert(v8::Context::InContext());
 
@@ -135,7 +254,7 @@ jobject Env::Wrap(v8::Handle<v8::Value> value)
   if (value.IsEmpty() || value->IsNull() || value->IsUndefined()) return NULL;
   if (value->IsTrue()) return NewBoolean(JNI_TRUE);
   if (value->IsFalse()) return NewBoolean(JNI_FALSE);
-  
+
   if (value->IsInt32()) return NewInt(value->Int32Value());  
   if (value->IsUint32()) return NewLong(value->IntegerValue());
   if (value->IsString())
@@ -150,77 +269,45 @@ jobject Env::Wrap(v8::Handle<v8::Value> value)
   return NewV8Object(value->ToObject());
 }
 
-jobject Env::NewBoolean(jboolean value)
+v8::Handle<v8::Value> V8Env::Wrap(jobject value)
 {
-  jclass clazz = m_env->FindClass("java/lang/Boolean");
-  jmethodID cid = m_env->GetMethodID(clazz, "<init>", "(Z)V");
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
-  
-  return result;
-}
+  v8::HandleScope handle_scope;
 
-jobject Env::NewInt(jint value)
-{
-  jclass clazz = m_env->FindClass("java/lang/Integer");
-  jmethodID cid = m_env->GetMethodID(clazz, "<init>", "(I)V");
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
+  v8::Handle<v8::Value> result;
 
-  return result;
-}
+  jclass clazz = m_env->GetObjectClass(value);
+    
+  if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/String")) == JNI_TRUE) 
+  {
+    jstring str = (jstring) value;
+    const char *p = m_env->GetStringUTFChars(str, NULL);
 
-jobject Env::NewLong(jlong value)
-{
-  jclass clazz = m_env->FindClass("java/lang/Long");
-  jmethodID cid = m_env->GetMethodID(clazz, "<init>", "(J)V");
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
+    result = v8::String::New(p, m_env->GetStringUTFLength(str));
 
-  return result;
-}
+    m_env->ReleaseStringUTFChars(str, p);
+  }
+  else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/Integer")) == JNI_TRUE ||
+           m_env->IsAssignableFrom(clazz, FindClass("java/lang/Short")) == JNI_TRUE ||
+           m_env->IsAssignableFrom(clazz, FindClass("java/lang/Byte")) == JNI_TRUE) 
+  {
+    jmethodID mid = GetMethodID(clazz, "intValue", "()I");
+    result = v8::Integer::New(m_env->CallIntMethod(value, mid));
+  }
+  else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/Double")) == JNI_TRUE ||
+           m_env->IsAssignableFrom(clazz, FindClass("java/lang/Float")) == JNI_TRUE) 
+  {
+    jmethodID mid = GetMethodID(clazz, "doubleValue", "()D");
+    result = v8::Number::New(m_env->CallDoubleMethod(value, mid));
+  }
+  else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/Boolean")) == JNI_TRUE) 
+  {
+    jmethodID mid = GetMethodID(clazz, "booleanValue", "()Z");
+    result = v8::Boolean::New(m_env->CallBooleanMethod(value, mid));
+  } else {
 
-jobject Env::NewDouble(jdouble value)
-{
-  jclass clazz = m_env->FindClass("java/lang/Double");
-  jmethodID cid = m_env->GetMethodID(clazz, "<init>", "(D)V");
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
+  }
 
-  return result;
-}
-
-jobject Env::NewDate(v8::Handle<v8::Date> date)
-{
-  jclass clazz = m_env->FindClass("java/util/Date");
-  jmethodID cid = m_env->GetMethodID(clazz, "<init>", "(J)V");
-  jlong value = floor(date->NumberValue() / 1000);
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
-
-  return result;
-}
-
-jobject Env::NewV8Object(v8::Handle<v8::Object> obj)
-{
-  jclass clazz = m_env->FindClass("lu/flier/script/V8Object");
-  jmethodID cid = m_env->GetMethodID(clazz, "<init>", "(J)V");
-  jlong value = (jlong) *v8::Persistent<v8::Object>::New(obj);
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
-
-  return result;
-}
-
-jobject Env::NewV8Context(v8::Handle<v8::Context> ctxt)
-{
-  jclass clazz = m_env->FindClass("lu/flier/script/V8Context");
-  jmethodID cid = m_env->GetMethodID(clazz, "<init>", "(J)V");
-  jlong value = (jlong) *v8::Persistent<v8::Context>::New(ctxt);
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
-
-  return result;
+  return handle_scope.Close(result);
 }
 
 } // namespace jni 

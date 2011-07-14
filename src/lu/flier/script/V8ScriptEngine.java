@@ -16,6 +16,8 @@ import javax.script.SimpleBindings;
 public final class V8ScriptEngine extends AbstractScriptEngine implements Invocable, Compilable
 {
     private final V8ScriptEngineFactory factory;
+    
+    private final V8Context ctxt = new V8Context();
 
     V8ScriptEngine(V8ScriptEngineFactory factory)
     {
@@ -50,9 +52,7 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
     public Object eval(String script, ScriptContext context) throws ScriptException
     {
     	if (script == null) throw new IllegalArgumentException("empty script");
-    	
-    	V8Context ctxt = new V8Context();
-    	
+    	    	
     	ctxt.enter();
     	
         try {
@@ -89,8 +89,6 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 	@Override
 	public CompiledScript compile(String script) throws ScriptException 
 	{		
-    	V8Context ctxt = new V8Context();
-    	
     	ctxt.enter();
     	
 		try {
@@ -113,15 +111,17 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 
 	@Override
 	public Object invokeMethod(Object thiz, String name, Object... args)
-			throws ScriptException, NoSuchMethodException {
-		// TODO Auto-generated method stub
-		return null;
+			throws ScriptException, NoSuchMethodException 
+	{
+		return ((V8Function) ((V8Object) thiz).get(name)).invoke(args);	
 	}
 
 	@Override
 	public Object invokeFunction(String name, Object... args)
-			throws ScriptException, NoSuchMethodException {
-		// TODO Auto-generated method stub
+			throws ScriptException, NoSuchMethodException 
+	{
+		((V8Function) ctxt.getGlobal().get(name)).invoke(args);
+
 		return null;
 	}
 

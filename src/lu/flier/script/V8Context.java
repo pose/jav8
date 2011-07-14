@@ -39,8 +39,14 @@ public class V8Context
 		internalLeave(this.ctxt);
 	}
 	
-	private native static long internalCreate(); 
+	public V8Object getGlobal()
+	{
+		return internalGetGlobal(this.ctxt);
+	}	
+
+	private native static long internalCreate();
 	private native void internalRelease(long ctxt);
 	private native void internalEnter(long ctxt);
 	private native void internalLeave(long ctxt);
+	private native V8Object internalGetGlobal(long ctxt);
 }

@@ -136,6 +136,14 @@ JNIEXPORT void JNICALL Java_lu_flier_script_V8Context_internalEnter
 JNIEXPORT void JNICALL Java_lu_flier_script_V8Context_internalLeave
   (JNIEnv *, jobject, jlong);
 
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalGetGlobal
+ * Signature: (J)Llu/flier/script/V8Object;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalGetGlobal
+  (JNIEnv *, jobject, jlong);
+
 #ifdef __cplusplus
 }
 #endif
@@ -154,6 +162,89 @@ extern "C" {
  */
 JNIEXPORT void JNICALL Java_lu_flier_script_V8Object_internalRelease
   (JNIEnv *, jobject, jlong);
+
+/*
+ * Class:     lu_flier_script_V8Object
+ * Method:    internalGetKeys
+ * Signature: ()[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Object_internalGetKeys
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     lu_flier_script_V8Object
+ * Method:    size
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_lu_flier_script_V8Object_size
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     lu_flier_script_V8Object
+ * Method:    isEmpty
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_lu_flier_script_V8Object_isEmpty
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     lu_flier_script_V8Object
+ * Method:    clear
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Object_clear
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     lu_flier_script_V8Object
+ * Method:    containsKey
+ * Signature: (Ljava/lang/Object;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_lu_flier_script_V8Object_containsKey
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     lu_flier_script_V8Object
+ * Method:    get
+ * Signature: (Ljava/lang/Object;)Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Object_get
+  (JNIEnv *, jobject, jobject);
+
+/*
+ * Class:     lu_flier_script_V8Object
+ * Method:    put
+ * Signature: (Ljava/lang/String;Ljava/lang/Object;)Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Object_put
+  (JNIEnv *, jobject, jstring, jobject);
+
+/*
+ * Class:     lu_flier_script_V8Object
+ * Method:    remove
+ * Signature: (Ljava/lang/Object;)Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Object_remove
+  (JNIEnv *, jobject, jobject);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* Header for class lu_flier_script_V8Function */
+
+#ifndef _Included_lu_flier_script_V8Function
+#define _Included_lu_flier_script_V8Function
+#ifdef __cplusplus
+extern "C" {
+#endif
+/*
+ * Class:     lu_flier_script_V8Function
+ * Method:    internalInvoke
+ * Signature: (JLjava/lang/Long;[Ljava/lang/Object;)Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Function_internalInvoke
+  (JNIEnv *, jobject, jlong, jobject, jobjectArray);
 
 #ifdef __cplusplus
 }

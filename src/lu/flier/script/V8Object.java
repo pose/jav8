@@ -1,13 +1,17 @@
 package lu.flier.script;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import javax.script.Bindings;
 
-public class V8Object implements Bindings {
-	private long obj;
+public class V8Object implements Bindings 
+{
+	protected long obj;
 	
 	public V8Object(long obj) {
 		this.obj = obj;
@@ -22,78 +26,77 @@ public class V8Object implements Bindings {
 		this.obj = 0;
 	}
 	
-	private native void internalRelease(long ptr);
+	protected native void internalRelease(long ptr);
+	private native String[] internalGetKeys();
 	
 	@Override
-	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+	public native int size();
 
 	@Override
-	public boolean isEmpty() {
-		// TODO Auto-generated method stub
-		return false;
+	public native boolean isEmpty();
+
+	@Override
+	public native void clear();
+
+	@Override
+	public native boolean containsKey(Object key);
+
+	@Override
+	public native Object get(Object key);
+
+	@Override
+	public native Object put(String name, Object value);
+
+	@Override
+	public native Object remove(Object key);
+
+	@Override
+	public Set<String> keySet() {
+		Set<String> keys = new HashSet<String>();
+		
+		for (String key : internalGetKeys()) {
+			keys.add(key);
+		}
+		
+		return keys;
 	}
 
 	@Override
 	public boolean containsValue(Object value) {
-		// TODO Auto-generated method stub
+		for (String name : internalGetKeys()) {
+			if (get(name) == value) {
+				return true;
+			}
+		}
 		return false;
-	}
-
-	@Override
-	public void clear() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public Set<String> keySet() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
 	public Collection<Object> values() {
-		// TODO Auto-generated method stub
-		return null;
+		Collection<Object> values = new ArrayList<Object>();
+		
+		for (String name : internalGetKeys()) {
+			values.add(get(name));
+		}
+		
+		return values;
 	}
 
 	@Override
-	public Set<java.util.Map.Entry<String, Object>> entrySet() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Object put(String name, Object value) {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<Map.Entry<String, Object>> entrySet() {
+		Set<Map.Entry<String, Object>> entries = new HashSet<Map.Entry<String, Object>>();
+		
+		for (String name : internalGetKeys()) {
+			entries.add(new HashMap.SimpleEntry<String, Object>(name, get(name)));
+		}
+		
+		return entries;
 	}
 
 	@Override
 	public void putAll(Map<? extends String, ? extends Object> toMerge) {
-		// TODO Auto-generated method stub
-
+		for (Map.Entry<? extends String, ? extends Object> entry: toMerge.entrySet()) {
+			this.put(entry.getKey(), entry.getValue());
+		}
 	}
-
-	@Override
-	public boolean containsKey(Object key) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public Object get(Object key) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Object remove(Object key) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }
