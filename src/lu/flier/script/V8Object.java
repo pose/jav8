@@ -60,13 +60,20 @@ public class V8Object implements Bindings
 		
 		return keys;
 	}
-
+	
 	@Override
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public boolean containsValue(Object value) {
-		for (String name : internalGetKeys()) {
-			if (get(name) == value) {
-				return true;
-			}
+		for (String name : internalGetKeys()) {		
+			Object v = this.get(name);
+			
+			if (v == null || value == null) {
+				if (v == value) return true;
+			} else if (v.getClass() == value.getClass()) {
+				if (0 == ((Comparable) value).compareTo(this.get(name))) {
+					return true;					
+				}
+			}			
 		}
 		return false;
 	}

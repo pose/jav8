@@ -185,7 +185,7 @@ void JNICALL Java_lu_flier_script_V8Object_clear(JNIEnv *pEnv, jobject pObj)
 
   for (size_t i=0; i<names->Length(); i++)
   {
-    obj->Delete(v8::Handle<v8::String>::Cast(names->Get(i)));   
+    obj->ForceDelete(names->Get(i));   
   }
 }
 

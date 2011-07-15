@@ -234,6 +234,17 @@ jobject Env::NewV8Object(v8::Handle<v8::Object> obj)
   return result;
 }
 
+jobject Env::NewV8Array(v8::Handle<v8::Array> array)
+{
+  jclass clazz = FindClass("lu/flier/script/V8Array");
+  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
+  jlong value = (jlong) *v8::Persistent<v8::Array>::New(array);
+  jobject result = m_env->NewObject(clazz, cid, value);
+  m_env->DeleteLocalRef(clazz);
+
+  return result;
+}
+
 jobject Env::NewV8Function(v8::Handle<v8::Function> func)
 {
   jclass clazz = FindClass("lu/flier/script/V8Function");
@@ -276,6 +287,7 @@ jobject V8Env::Wrap(v8::Handle<v8::Value> value)
   }
   if (value->IsNumber()) return NewDouble(value->NumberValue());
   if (value->IsDate()) return NewDate(v8::Handle<v8::Date>::Cast(value));
+  if (value->IsArray()) return NewV8Array(v8::Handle<v8::Array>::Cast(value->ToObject()));
   if (value->IsFunction()) return NewV8Function(v8::Handle<v8::Function>::Cast(value->ToObject()));
 
   return NewV8Object(value->ToObject());

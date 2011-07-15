@@ -62,6 +62,7 @@ public:
   jstring NewString(v8::Handle<v8::String> str);
   jobject NewDate(v8::Handle<v8::Date> date);
   jobject NewV8Object(v8::Handle<v8::Object> obj);
+  jobject NewV8Array(v8::Handle<v8::Array> array);
   jobject NewV8Function(v8::Handle<v8::Function> func);
   jobject NewV8Context(v8::Handle<v8::Context> ctxt);
 

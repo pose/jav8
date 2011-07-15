@@ -33,7 +33,7 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
         scope.put(LANGUAGE_VERSION, factory.getLanguageVersion());
     }
     
-    private V8Context getV8Context()
+    public V8Context getV8Context()
     {
     	return (V8Context) this.context;
     }
