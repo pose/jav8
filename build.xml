@@ -4,7 +4,7 @@
 	
 	<property name="project.name" value="jav8"/>
 	<property name="project.version" value="0.1"/>
-	<property name="project.mode" value="release" />
+	<property name="project.mode" value="debug" />
 	
 	<property name="src.dir" value="${basedir}/src" />
 	<property name="docs.dir" value="${basedir}/docs" />	
@@ -21,13 +21,13 @@
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="junit4.path" value="${lib.dir}/junit-4.9b3.jar" />
 	
-	<condition property="is_win" value="true">
+	<condition property="is_win">
 		<os family="windows" />
 	</condition>
-	<condition property="is_unix" value="true">
+	<condition property="is_unix">
 		<os family="unix" />
 	</condition>	
-	
+		
 	<property file="${basedir}/build.properties" />
 
 	<path id="build.classpath">
@@ -64,6 +64,7 @@
 		<javadoc packagenames="lu.flier" sourcepath="${src.dir}" destdir="${docs.dir}">
 			<fileset dir="${src.dir}">
 				<include name="**" />
+				<exclude name="META-INF/**" />
 			</fileset>
 		</javadoc>
 	</target>	
@@ -79,17 +80,18 @@
 		</javah>
 		
 		<echo>Building JNI library ...</echo>
-		<mkdir dir="${obj.dir}/${project.mode}"/>
+		<mkdir dir="${bin.dir}"/>
 		<cpptasks:cc name="${cc.compiler}"
-			objdir="${obj.dir}/${project.mode}" outfile="${out.dir}/${project.name}" 
+			objdir="${bin.dir}" outfile="${project.name}" 
 			runtime="static" link="static" outtype="shared" 
-			multithreaded="true" optimize="speed" 
+			multithreaded="true" optimize="speed" incremental="true" 
 			debug="true" exceptions="true" rtti="true">			
 			<fileset dir="${jni.dir}" includes="*.cpp"/>			
 
 			<compilerarg value="/GL" if="is_win"/>
 			<compilerarg value="/EHsc" if="is_win"/>
 			<linkerarg value="/LTCG" if="is_win"/>
+			<linkerarg value="/INCREMENTAL" if="is_win"/>			
 			
 			<includepath>
 				<path>
@@ -99,7 +101,7 @@
 				</path>
 			</includepath>
 			<libset libs="winmm,ws2_32"/>
-			<libset dir="${env.V8_HOME}" libs="v8"/>
+			<libset dir="${env.V8_HOME}" libs="v8_g"/>
 		</cpptasks:cc>
 		
 		<copy todir="${basedir}">
@@ -123,7 +125,7 @@
 			<include name="**/*.java"/>
 		</javac>				
 		<junit printsummary="yes" haltonfailure="yes" fork="yes">
-			<env key="PATH" path="${java.library.path};${out.dir}"/>
+			<env key="PATH" path="${java.library.path};${bin.dir}"/>
 			<formatter type="plain" usefile="flase" />
 			<formatter type="xml"/>
 			<test name="lu.flier.script.V8ScriptEngineTest" todir="${test.report.dir}" />

@@ -72,6 +72,7 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8CompiledScript_internalExecute
 #ifdef __cplusplus
 extern "C" {
 #endif
+/* Inaccessible static: scopes */
 /*
  * Class:     lu_flier_script_V8Context
  * Method:    getEntered
@@ -241,10 +242,10 @@ extern "C" {
 /*
  * Class:     lu_flier_script_V8Function
  * Method:    internalInvoke
- * Signature: (JLjava/lang/Long;[Ljava/lang/Object;)Ljava/lang/Object;
+ * Signature: (JJ[Ljava/lang/Object;)Ljava/lang/Object;
  */
 JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Function_internalInvoke
-  (JNIEnv *, jobject, jlong, jobject, jobjectArray);
+  (JNIEnv *, jobject, jlong, jlong, jobjectArray);
 
 #ifdef __cplusplus
 }

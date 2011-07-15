@@ -3,11 +3,15 @@ package lu.flier.script;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 
 import javax.script.Compilable;
 import javax.script.CompiledScript;
+import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
@@ -68,5 +72,26 @@ public class V8ScriptEngineTest
     	
     	assertEquals(this.eng, script.getEngine());
     	assertEquals(3, script.eval());
+    	
+    	script = compiler.compile(new StringReader("2+3"));
+    	assertEquals(5, script.eval());
     }
+    
+    @Test
+    public void testInvoke() throws ScriptException, NoSuchMethodException, IOException 
+    {
+    	Invocable invocable = (Invocable) this.eng; 
+    	
+    	this.eng.eval("function hello(name) { return 'Hello ' + name; }");
+    	    	
+    	assertEquals("Hello Flier", invocable.invokeFunction("hello", "Flier"));
+    	
+    	try {
+    		invocable.invokeFunction("nonexist");
+    		fail();
+    	} catch (NoSuchMethodException e) {
+    		
+    	}
+    		
+    }    
 }

@@ -33,6 +33,8 @@ jobject JNICALL Java_lu_flier_script_V8ScriptEngineFactory_getParameter(JNIEnv *
     return pEnv->NewStringUTF("1.8.5");
 
   env.Throw("java/lang/IllegalArgumentException", "Invalid key");
+
+  return NULL;
 }
 
 jobject JNICALL Java_lu_flier_script_V8CompiledScript_internalExecute
@@ -261,7 +263,17 @@ jobjectArray JNICALL Java_lu_flier_script_V8Object_internalGetKeys(JNIEnv *pEnv,
 }
 
 jobject JNICALL Java_lu_flier_script_V8Function_internalInvoke
-  (JNIEnv *, jobject, jlong, jobject, jobjectArray)
+  (JNIEnv *pEnv, jobject pObj, jlong pFunc, jlong pThiz, jobjectArray pArgs)
 {
-  return NULL;
+  jni::V8Env env(pEnv);
+
+  v8::Persistent<v8::Function> func((v8::Function *)pFunc);
+  v8::Handle<v8::Object> thiz = v8::Persistent<v8::Object>((v8::Object *) pThiz);
+
+  if (thiz.IsEmpty()) thiz = v8::Context::GetCurrent()->Global();
+  std::vector< v8::Handle<v8::Value> > args = env.GetArray(pArgs);
+
+  v8::Handle<v8::Value> result = func->Call(thiz, args.size(), &args[0]);
+
+  return env.Wrap(result);
 }

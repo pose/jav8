@@ -16,14 +16,13 @@ import javax.script.SimpleBindings;
 public final class V8ScriptEngine extends AbstractScriptEngine implements Invocable, Compilable
 {
     private final V8ScriptEngineFactory factory;
-    
-    private final V8Context ctxt = new V8Context();
 
     V8ScriptEngine(V8ScriptEngineFactory factory)
     {
         assert factory != null;
 
         this.factory = factory;
+        this.context = new V8Context();
 
         Bindings scope = getBindings(ScriptContext.ENGINE_SCOPE);
 
@@ -34,6 +33,11 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
         scope.put(LANGUAGE_VERSION, factory.getLanguageVersion());
     }
     
+    private V8Context getV8Context()
+    {
+    	return (V8Context) this.context;
+    }
+        
     private String readAll(Reader reader) throws IOException
     {
     	StringBuilder sb = new StringBuilder();
@@ -53,14 +57,14 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
     {
     	if (script == null) throw new IllegalArgumentException("empty script");
     	    	
-    	ctxt.enter();
+    	this.getV8Context().enter();
     	
         try {
-			return new V8CompiledScript(this, ctxt, script).eval(context);
+			return new V8CompiledScript(this, this.getV8Context(), script).eval(context);
 		} catch (Exception e) {
 			throw new ScriptException(e);
 		} finally {
-			ctxt.leave();
+			this.getV8Context().leave();
 		}
     }
 
@@ -89,14 +93,14 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 	@Override
 	public CompiledScript compile(String script) throws ScriptException 
 	{		
-    	ctxt.enter();
+		this.getV8Context().enter();
     	
 		try {
-			return new V8CompiledScript(this, ctxt, script);
+			return new V8CompiledScript(this, this.getV8Context(), script);
 		} catch (Exception e) {
 			throw new ScriptException(e); 
 		} finally {
-			ctxt.leave();
+			this.getV8Context().leave();
 		}
 	}
 
@@ -113,16 +117,28 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 	public Object invokeMethod(Object thiz, String name, Object... args)
 			throws ScriptException, NoSuchMethodException 
 	{
-		return ((V8Function) ((V8Object) thiz).get(name)).invoke(args);	
+		this.getV8Context().enter();
+		try {
+			return ((V8Function) ((V8Object) thiz).get(name)).invoke(args);
+		} finally {
+			this.getV8Context().leave();
+		}
 	}
 
 	@Override
 	public Object invokeFunction(String name, Object... args)
 			throws ScriptException, NoSuchMethodException 
 	{
-		((V8Function) ctxt.getGlobal().get(name)).invoke(args);
-
-		return null;
+		this.getV8Context().enter();
+		try {
+			V8Function func = (V8Function) getV8Context().getGlobal().get(name);
+			
+			if (func == null) throw new NoSuchMethodException(name);
+			
+			return func.invoke(args);
+		} finally {
+			this.getV8Context().leave();
+		}
 	}
 
 	@Override

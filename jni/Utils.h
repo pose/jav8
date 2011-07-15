@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include <jni.h>
 
@@ -38,7 +39,7 @@ protected:
     return m_env->GetStaticMethodID(clazz, name, sig);
   }
   
-  const std::string Extract(v8::TryCatch& try_catch);
+  const std::string Extract(const v8::TryCatch& try_catch);
 public:
   Env(JNIEnv *env) : m_env(env) {}
   virtual ~Env() {}
@@ -61,10 +62,11 @@ public:
   jstring NewString(v8::Handle<v8::String> str);
   jobject NewDate(v8::Handle<v8::Date> date);
   jobject NewV8Object(v8::Handle<v8::Object> obj);
+  jobject NewV8Function(v8::Handle<v8::Function> func);
   jobject NewV8Context(v8::Handle<v8::Context> ctxt);
 
   void Throw(const char *type, const char *msg);
-  bool ThrowIf(v8::TryCatch try_catch);
+  bool ThrowIf(const v8::TryCatch& try_catch);
 };
 
 class V8Env : public Env {
@@ -75,6 +77,8 @@ public:
   virtual ~V8Env() { ThrowIf(m_tc); }
 
   bool HasCaught() const { return m_tc.HasCaught(); }
+
+  std::vector< v8::Handle<v8::Value> > GetArray(jobjectArray array);
 
   jobject Wrap(v8::Handle<v8::Value> value);
   v8::Handle<v8::Value> Wrap(jobject value);

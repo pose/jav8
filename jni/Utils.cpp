@@ -74,7 +74,7 @@ static struct {
   { "TypeError",      "java/lang/NoSuchMethodException" }
 };
 
-bool Env::ThrowIf(v8::TryCatch try_catch)
+bool Env::ThrowIf(const v8::TryCatch& try_catch)
 {
   if (try_catch.HasCaught())
   {
@@ -111,7 +111,7 @@ bool Env::ThrowIf(v8::TryCatch try_catch)
   return try_catch.HasCaught();
 }
 
-const std::string Env::Extract(v8::TryCatch& try_catch)
+const std::string Env::Extract(const v8::TryCatch& try_catch)
 {
   assert(v8::Context::InContext());
 
@@ -234,6 +234,17 @@ jobject Env::NewV8Object(v8::Handle<v8::Object> obj)
   return result;
 }
 
+jobject Env::NewV8Function(v8::Handle<v8::Function> func)
+{
+  jclass clazz = FindClass("lu/flier/script/V8Function");
+  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
+  jlong value = (jlong) *v8::Persistent<v8::Function>::New(func);
+  jobject result = m_env->NewObject(clazz, cid, value);
+  m_env->DeleteLocalRef(clazz);
+
+  return result;
+}
+
 jobject Env::NewV8Context(v8::Handle<v8::Context> ctxt)
 {
   jclass clazz = FindClass("lu/flier/script/V8Context");
@@ -265,6 +276,7 @@ jobject V8Env::Wrap(v8::Handle<v8::Value> value)
   }
   if (value->IsNumber()) return NewDouble(value->NumberValue());
   if (value->IsDate()) return NewDate(v8::Handle<v8::Date>::Cast(value));
+  if (value->IsFunction()) return NewV8Function(v8::Handle<v8::Function>::Cast(value->ToObject()));
 
   return NewV8Object(value->ToObject());
 }
@@ -308,6 +320,20 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
   }
 
   return handle_scope.Close(result);
+}
+
+std::vector< v8::Handle<v8::Value> > V8Env::GetArray(jobjectArray array)
+{
+  v8::HandleScope handle_scope;
+
+  std::vector< v8::Handle<v8::Value> > items(m_env->GetArrayLength(array));
+
+  for (size_t i=0; i<items.size(); i++)
+  {
+    items[i] = handle_scope.Close(Wrap(m_env->GetObjectArrayElement(array, i)));
+  }
+
+  return items;
 }
 
 } // namespace jni 

@@ -1,6 +1,8 @@
 package lu.flier.script;
 
-public class V8Context 
+import javax.script.SimpleScriptContext;
+
+public class V8Context extends SimpleScriptContext
 {
 	private long ctxt;
 	
