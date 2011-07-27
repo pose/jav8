@@ -16,14 +16,23 @@ public class V8Context extends SimpleScriptContext
 		this.ctxt = internalCreate();
 	}
 	
+	public void dispose()
+	{
+		if (this.ctxt > 0) 
+		{			
+			this.internalRelease(this.ctxt);
+			
+			this.ctxt = 0;
+		}
+	}
+	
+	
 	@Override
 	protected void finalize() throws Throwable 
 	{
 		super.finalize();
 		
-		this.internalRelease(this.ctxt);
-		
-		this.ctxt = 0;
+		this.dispose();
 	}
 	
 	public native static V8Context getEntered();
@@ -41,9 +50,14 @@ public class V8Context extends SimpleScriptContext
 		internalLeave(this.ctxt);
 	}
 	
+	public Object bind(Object obj) 
+	{
+		return obj instanceof V8ContextAware ? ((V8ContextAware) obj).bindTo(this) : obj;
+	}
+	
 	public V8Object getGlobal()
 	{
-		return internalGetGlobal(this.ctxt);
+		return (V8Object) internalGetGlobal(this.ctxt).bindTo(this);
 	}	
 
 	private native static long internalCreate();

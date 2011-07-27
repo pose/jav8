@@ -113,8 +113,6 @@ bool Env::ThrowIf(const v8::TryCatch& try_catch)
 
 const std::string Env::Extract(const v8::TryCatch& try_catch)
 {
-  assert(v8::Context::InContext());
-
   v8::HandleScope handle_scope;
 
   std::ostringstream oss;

@@ -21,8 +21,10 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
     {
         assert factory != null;
 
-        this.factory = factory;
+        this.factory = factory;        
         this.context = new V8Context();
+        	
+        getV8Context().enter();
 
         Bindings scope = getBindings(ScriptContext.ENGINE_SCOPE);
 
@@ -31,9 +33,9 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
         scope.put(NAME, factory.getName());
         scope.put(LANGUAGE, factory.getLanguageName());
         scope.put(LANGUAGE_VERSION, factory.getLanguageVersion());
-    }
-    
-    public V8Context getV8Context()
+    }    
+
+	public V8Context getV8Context()
     {
     	return (V8Context) this.context;
     }
@@ -56,15 +58,11 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
     public Object eval(String script, ScriptContext context) throws ScriptException
     {
     	if (script == null) throw new IllegalArgumentException("empty script");
-    	    	
-    	this.getV8Context().enter();
     	
         try {
-			return new V8CompiledScript(this, this.getV8Context(), script).eval(context);
+			return new V8CompiledScript(this, script).eval(context);
 		} catch (Exception e) {
 			throw new ScriptException(e);
-		} finally {
-			this.getV8Context().leave();
 		}
     }
 
@@ -92,16 +90,12 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 
 	@Override
 	public CompiledScript compile(String script) throws ScriptException 
-	{		
-		this.getV8Context().enter();
-    	
+	{	
 		try {
-			return new V8CompiledScript(this, this.getV8Context(), script);
+			return new V8CompiledScript(this, script);
 		} catch (Exception e) {
 			throw new ScriptException(e); 
-		} finally {
-			this.getV8Context().leave();
-		}
+		} 
 	}
 
 	@Override
@@ -117,28 +111,18 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 	public Object invokeMethod(Object thiz, String name, Object... args)
 			throws ScriptException, NoSuchMethodException 
 	{
-		this.getV8Context().enter();
-		try {
-			return ((V8Function) ((V8Object) thiz).get(name)).invoke(args);
-		} finally {
-			this.getV8Context().leave();
-		}
+		return ((V8Function) ((V8Object) thiz).get(name)).invoke(args);		
 	}
 
 	@Override
 	public Object invokeFunction(String name, Object... args)
 			throws ScriptException, NoSuchMethodException 
-	{
-		this.getV8Context().enter();
-		try {
-			V8Function func = (V8Function) getV8Context().getGlobal().get(name);
-			
-			if (func == null) throw new NoSuchMethodException(name);
-			
-			return func.invoke(args);
-		} finally {
-			this.getV8Context().leave();
-		}
+	{		
+		V8Function func = (V8Function) getV8Context().getGlobal().get(name);
+		
+		if (func == null) throw new NoSuchMethodException(name);
+		
+		return func.invoke(args);
 	}
 
 	@Override

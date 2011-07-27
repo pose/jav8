@@ -8,9 +8,17 @@
 
 #include "Utils.h"
 
-void JNICALL Java_lu_flier_script_V8ScriptEngineFactory_initialize(JNIEnv *, jclass)
+void JNICALL Java_lu_flier_script_ManagedV8Object_internalRelease
+  (JNIEnv *pEnv, jobject pObj, jlong ptr)
 {
-  v8::V8::Initialize(); 
+  if (ptr) 
+  { 
+    if (v8::Isolate::GetCurrent() == NULL) {
+      v8::Isolate::New()->Enter();
+    }
+
+    v8::Persistent<v8::Object>((v8::Object *) ptr).Dispose(); 
+  }
 }
 
 jobject JNICALL Java_lu_flier_script_V8ScriptEngineFactory_getParameter(JNIEnv *pEnv, jobject pObj, jstring key)
@@ -37,16 +45,9 @@ jobject JNICALL Java_lu_flier_script_V8ScriptEngineFactory_getParameter(JNIEnv *
   return NULL;
 }
 
-jobject JNICALL Java_lu_flier_script_V8CompiledScript_internalExecute
-  (JNIEnv *pEnv, jobject pObj, jlong pCompiledScript, jobject pContext)
+void JNICALL Java_lu_flier_script_V8ScriptEngineFactory_initialize(JNIEnv *, jclass)
 {
-  jni::V8Env env(pEnv);
-
-  v8::Persistent<v8::Script> compiledScript((v8::Script *) pCompiledScript);
-
-  v8::Handle<v8::Value> result = compiledScript->Run();
-
-  return env.HasCaught() ? NULL : env.Wrap(result);
+  v8::V8::Initialize(); 
 }
 
 jlong JNICALL Java_lu_flier_script_V8CompiledScript_internalCompile
@@ -68,10 +69,26 @@ jlong JNICALL Java_lu_flier_script_V8CompiledScript_internalCompile
 
 void JNICALL Java_lu_flier_script_V8CompiledScript_internalRelease
   (JNIEnv *pEnv, jobject pObj, jlong ptr)
+{  
+  if (ptr) { 
+    if (v8::Isolate::GetCurrent() == NULL) {
+      v8::Isolate::New()->Enter();
+    }
+
+    v8::Persistent<v8::Script>((v8::Script *) ptr).Dispose(); 
+  }
+}
+
+jobject JNICALL Java_lu_flier_script_V8CompiledScript_internalExecute
+  (JNIEnv *pEnv, jobject pObj, jlong pCompiledScript, jobject pContext)
 {
   jni::V8Env env(pEnv);
 
-  if (ptr) { v8::Persistent<v8::Script>((v8::Script *) ptr).Dispose(); }
+  v8::Persistent<v8::Script> compiledScript((v8::Script *) pCompiledScript);
+
+  v8::Handle<v8::Value> result = compiledScript->Run();
+
+  return env.HasCaught() ? NULL : env.Wrap(result);
 }
 
 jobject JNICALL Java_lu_flier_script_V8Context_getEntered(JNIEnv *pEnv, jclass)
@@ -118,9 +135,16 @@ jlong JNICALL Java_lu_flier_script_V8Context_internalCreate(JNIEnv *pEnv, jclass
 void JNICALL Java_lu_flier_script_V8Context_internalRelease
   (JNIEnv *pEnv, jobject, jlong ptr)
 {
-  jni::V8Env env(pEnv);
+  if (ptr) { 
+    if (v8::Isolate::GetCurrent() == NULL) {
+      v8::Isolate::New()->Enter();
+    }
 
-  if (ptr) { v8::Persistent<v8::Context>((v8::Context *) ptr).Dispose(); }
+    v8::Persistent<v8::Context> ctxt((v8::Context *) ptr);
+
+    ctxt->Exit();
+    ctxt.Dispose(); 
+  }
 }
 
 void JNICALL Java_lu_flier_script_V8Context_internalEnter
@@ -149,12 +173,23 @@ jobject JNICALL Java_lu_flier_script_V8Context_internalGetGlobal
   return env.HasCaught() ? NULL : env.NewV8Object(global);
 }
 
-void JNICALL Java_lu_flier_script_V8Object_internalRelease
-  (JNIEnv *pEnv, jobject pObj, jlong ptr)
+jobjectArray JNICALL Java_lu_flier_script_V8Object_internalGetKeys(JNIEnv *pEnv, jobject pObj)
 {
   jni::V8Env env(pEnv);
 
-  if (ptr) { v8::Persistent<v8::Object>((v8::Object *) ptr).Dispose(); }
+  v8::Persistent<v8::Object> obj((v8::Object *) env.GetLongField(pObj, "obj"));
+
+  v8::Handle<v8::Array> names = obj->GetPropertyNames();
+  jobjectArray keys = env.NewObjectArray("java/lang/String", names->Length());
+
+  for (size_t i=0; i<names->Length(); i++)
+  {
+    v8::Handle<v8::String> name = v8::Handle<v8::String>::Cast(names->Get(i));
+
+    pEnv->SetObjectArrayElement(keys, i, env.NewString(name));
+  }
+
+  return keys;
 }
 
 jint JNICALL Java_lu_flier_script_V8Object_size(JNIEnv *pEnv, jobject pObj)
@@ -200,7 +235,7 @@ jboolean JNICALL Java_lu_flier_script_V8Object_containsKey
   return obj->Has(v8::String::New(key.c_str(), key.size())) ? JNI_TRUE : JNI_FALSE;
 }
 
-jobject JNICALL Java_lu_flier_script_V8Object_get
+jobject JNICALL Java_lu_flier_script_V8Object_internalGet
   (JNIEnv *pEnv, jobject pObj, jobject pKey)
 {
   jni::V8Env env(pEnv);
@@ -213,7 +248,7 @@ jobject JNICALL Java_lu_flier_script_V8Object_get
   return env.HasCaught() ? NULL : env.Wrap(value);
 }
 
-jobject JNICALL Java_lu_flier_script_V8Object_put
+jobject JNICALL Java_lu_flier_script_V8Object_internalPut
   (JNIEnv *pEnv, jobject pObj, jstring pKey, jobject pValue)
 {
   jni::V8Env env(pEnv);
@@ -228,7 +263,7 @@ jobject JNICALL Java_lu_flier_script_V8Object_put
   return env.HasCaught() ? NULL : env.Wrap(value);
 }
 
-jobject JNICALL Java_lu_flier_script_V8Object_remove
+jobject JNICALL Java_lu_flier_script_V8Object_internalRemove
   (JNIEnv *pEnv, jobject pObj, jobject pKey)
 {
   jni::V8Env env(pEnv);
@@ -243,23 +278,25 @@ jobject JNICALL Java_lu_flier_script_V8Object_remove
   return env.HasCaught() ? NULL : env.Wrap(value);
 }
 
-jobjectArray JNICALL Java_lu_flier_script_V8Object_internalGetKeys(JNIEnv *pEnv, jobject pObj)
+jobject JNICALL Java_lu_flier_script_V8Array_internalGet
+  (JNIEnv *pEnv, jobject pObj, jlong pArray, jint index)
 {
   jni::V8Env env(pEnv);
 
-  v8::Persistent<v8::Object> obj((v8::Object *) env.GetLongField(pObj, "obj"));
+  v8::Persistent<v8::Array> array((v8::Array *)pArray);
+  v8::Handle<v8::Value> value = array->Get(index);
 
-  v8::Handle<v8::Array> names = obj->GetPropertyNames();
-  jobjectArray keys = env.NewObjectArray("java/lang/String", names->Length());
+  return env.HasCaught() ? NULL : env.Wrap(value);
+}
 
-  for (size_t i=0; i<names->Length(); i++)
-  {
-    v8::Handle<v8::String> name = v8::Handle<v8::String>::Cast(names->Get(i));
+jint JNICALL Java_lu_flier_script_V8Array_internalGetSize
+  (JNIEnv *pEnv, jobject pObj, jlong pArray)
+{
+  jni::V8Env env(pEnv);
 
-    pEnv->SetObjectArrayElement(keys, i, env.NewString(name));
-  }
+  v8::Persistent<v8::Array> array((v8::Array *)pArray);
 
-  return keys;
+  return array->Length();
 }
 
 jobject JNICALL Java_lu_flier_script_V8Function_internalInvoke

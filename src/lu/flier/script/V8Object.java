@@ -9,24 +9,26 @@ import java.util.Set;
 
 import javax.script.Bindings;
 
-public class V8Object implements Bindings 
+public class V8Object extends ManagedV8Object implements Bindings, V8ContextAware
 {
-	protected long obj;
-	
+	protected V8Context ctxt;
+
 	public V8Object(long obj) {
-		this.obj = obj;
+		super(obj);
 	}
 
 	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		
-		this.internalRelease(this.obj);		
-		
-		this.obj = 0;
+	public V8Context getContext() {
+		return ctxt;
 	}
-	
-	protected native void internalRelease(long ptr);
+
+	@Override
+	public Object bindTo(V8Context ctxt) {
+		this.ctxt = ctxt;
+		
+		return this;
+	}
+
 	private native String[] internalGetKeys();
 	
 	@Override
@@ -42,13 +44,23 @@ public class V8Object implements Bindings
 	public native boolean containsKey(Object key);
 
 	@Override
-	public native Object get(Object key);
+	public Object get(Object key) {
+		return this.ctxt.bind(internalGet(key));
+	}
+	
+	@Override
+	public Object put(String name, Object value) {
+		return this.ctxt.bind(internalPut(name, value));
+	}
 
 	@Override
-	public native Object put(String name, Object value);
+	public Object remove(Object key) {
+		return this.ctxt.bind(internalRemove(key));
+	}
 
-	@Override
-	public native Object remove(Object key);
+	private native Object internalGet(Object key);
+	private native Object internalPut(String name, Object value);
+	private native Object internalRemove(Object key);
 
 	@Override
 	public Set<String> keySet() {

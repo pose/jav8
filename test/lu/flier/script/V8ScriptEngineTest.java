@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,6 +33,14 @@ public class V8ScriptEngineTest
     public void setUp()
     {
         this.eng = new ScriptEngineManager().getEngineByName("jav8");
+    }
+    
+    @After
+    public void tearDown()
+    {
+    	this.eng = null;
+    	
+    	System.gc();    	
     }
 
     @Test
@@ -62,6 +72,17 @@ public class V8ScriptEngineTest
         assertEquals("obj.say(Hello,World)", factory.getMethodCallSyntax("obj", "say", "Hello", "World"));
         assertEquals("print(\"Hello world\")", factory.getOutputStatement("Hello world"));
         assertEquals("s1;s2;", factory.getProgram("s1", "s2"));
+    }
+    
+    @Test
+    public void testArray() throws ScriptException 
+    {    	
+		V8Array array = (V8Array) this.eng.eval("[1, 2, 3]");
+		
+    	assertNotNull(array);
+    	assertEquals(3, array.size());
+    	assertEquals(1, array.get(0));
+    	assertEquals(null, array.get(4));    		
     }
     
     @Test
@@ -98,17 +119,12 @@ public class V8ScriptEngineTest
     	}
     	
     	V8Context ctxt = ((V8ScriptEngine) this.eng).getV8Context();
-    	
-    	ctxt.enter(); 
-    	try {
-    		V8Object me = (V8Object) ctxt.getGlobal().get("me");
-    		
-    		assertNotNull(me);
-    	
-    		assertEquals("Flier say, hello baby", invocable.invokeMethod(me, "say", "baby"));
-    	} finally {
-    		ctxt.leave();
-    	} 
+    	    	
+		V8Object me = (V8Object) ctxt.getGlobal().get("me");
+		
+		assertNotNull(me);
+	
+		assertEquals("Flier say, hello baby", invocable.invokeMethod(me, "say", "baby"));
     }    
     
     @Test
@@ -127,41 +143,41 @@ public class V8ScriptEngineTest
 				  "var a = [1, 2, 3];" + 
 				  "var f = function () {};");
     	
-    	ctxt.enter(); 
-    	try {    		
-    		V8Object g = ctxt.getGlobal();
-    		
-    		assertNotNull(g);
-    		assertEquals(10, g.size());
-    		assertFalse(g.isEmpty());
-    		
-    		assertTrue(g.containsKey("b"));
-    		assertFalse(g.containsKey("nonexist"));
-    		assertTrue(g.containsValue("test"));
-    		assertFalse(g.containsValue("nonexist"));
-    		
-    		assertEquals(true, g.get("b"));
-    		assertEquals(123, g.get("i"));
-    		assertEquals(3.14, g.get("n"));
-    		assertEquals("test", g.get("s"));
-    		assertEquals(null, g.get("n1"));
-    		assertEquals(null, g.get("n2"));
-    		assertEquals(Date.class, g.get("d").getClass());    		
-    		assertEquals(V8Object.class, g.get("o").getClass());
-    		assertEquals("Flier", ((Bindings) g.get("o")).get("name"));
-    		assertEquals(V8Array.class, g.get("a").getClass());
-    		assertEquals(V8Function.class, g.get("f").getClass());
-    		
-    		assertEquals(null, g.get("test"));
-    		assertEquals(null, g.put("test", "test"));
-    		assertEquals("test", g.get("test"));
-    		assertEquals("test", g.remove("test"));
-    		assertEquals(null, g.get("test"));
-    		
-    		g.clear();
-    		assertTrue(g.isEmpty());
-    	} finally {
-    		ctxt.leave();
-    	} 
+		V8Object g = ctxt.getGlobal();
+		
+		assertNotNull(g);
+		
+		Object[] keys = g.keySet().toArray();
+		Arrays.sort(keys);		
+		assertEquals("[a, b, d, f, i, n, n1, n2, o, s]", Arrays.toString(keys));
+		assertEquals(10, g.size());
+		assertFalse(g.isEmpty());
+		
+		
+		assertTrue(g.containsKey("b"));
+		assertFalse(g.containsKey("nonexist"));
+		assertTrue(g.containsValue("test"));
+		assertFalse(g.containsValue("nonexist"));
+		
+		assertEquals(true, g.get("b"));
+		assertEquals(123, g.get("i"));
+		assertEquals(3.14, g.get("n"));
+		assertEquals("test", g.get("s"));
+		assertEquals(null, g.get("n1"));
+		assertEquals(null, g.get("n2"));
+		assertEquals(Date.class, g.get("d").getClass());    		
+		assertEquals(V8Object.class, g.get("o").getClass());
+		assertEquals("Flier", ((Bindings) g.get("o")).get("name"));
+		assertEquals(V8Array.class, g.get("a").getClass());
+		assertEquals(V8Function.class, g.get("f").getClass());
+		
+		assertEquals(null, g.get("test"));
+		assertEquals(null, g.put("test", "test"));
+		assertEquals("test", g.get("test"));
+		assertEquals("test", g.remove("test"));
+		assertEquals(null, g.get("test"));
+		
+		g.clear();
+		assertTrue(g.isEmpty());
     }
 }

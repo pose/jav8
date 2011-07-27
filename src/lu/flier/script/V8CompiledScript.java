@@ -8,14 +8,12 @@ import javax.script.ScriptException;
 public class V8CompiledScript extends CompiledScript
 {
 	private final V8ScriptEngine engine;
-	private final V8Context ctxt;
 	
 	private long data; 
 	
-	V8CompiledScript(V8ScriptEngine engine, V8Context ctxt, String script) throws Exception 
+	V8CompiledScript(V8ScriptEngine engine, String script) throws Exception 
 	{
-		this.engine = engine;		
-		this.ctxt = ctxt;
+		this.engine = engine;
 		
 		this.data = internalCompile(script);
 	}
@@ -38,14 +36,10 @@ public class V8CompiledScript extends CompiledScript
     @Override
     public Object eval(ScriptContext context) throws ScriptException
     {
-    	this.ctxt.enter();
-    	
     	try {
-			return this.internalExecute(this.data, context);
+			return this.engine.getV8Context().bind(this.internalExecute(this.data, context));
 		} catch (Exception e) {
 			throw new ScriptException(e);
-		} finally {
-			this.ctxt.leave();
 		}
     }
 
