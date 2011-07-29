@@ -130,7 +130,7 @@ JNIEXPORT jboolean JNICALL Java_lu_flier_script_V8Context_inContext
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_lu_flier_script_V8Context_internalCreate
-  (JNIEnv *, jclass);
+  (JNIEnv *, jobject);
 
 /*
  * Class:     lu_flier_script_V8Context

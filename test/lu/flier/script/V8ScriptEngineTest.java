@@ -16,6 +16,7 @@ import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.Invocable;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
@@ -28,11 +29,16 @@ import org.junit.Test;
 public class V8ScriptEngineTest
 {
     private ScriptEngine eng;
+    
+    private ScriptEngine createScriptEngine()
+    {
+    	return new ScriptEngineManager().getEngineByName("jav8");
+    }
 
     @Before
     public void setUp()
     {
-        this.eng = new ScriptEngineManager().getEngineByName("jav8");
+        this.eng = createScriptEngine();
     }
     
     @After
@@ -128,11 +134,9 @@ public class V8ScriptEngineTest
     }    
     
     @Test
-    public void testGlobal() throws ScriptException
+    public void testEngineBindings() throws ScriptException
     {
-    	V8Context ctxt = ((V8ScriptEngine) this.eng).getV8Context();
-    	
-		this.eng.eval("var b = true;" +
+    	this.eng.eval("var b = true;" +
 				  "var i = 123;" +
 				  "var n = 3.14;" +
 				  "var s = 'test';" +
@@ -143,14 +147,16 @@ public class V8ScriptEngineTest
 				  "var a = [1, 2, 3];" + 
 				  "var f = function () {};");
     	
-		V8Object g = ctxt.getGlobal();
+    	Bindings g = this.eng.getBindings(ScriptContext.ENGINE_SCOPE);
 		
 		assertNotNull(g);
 		
 		Object[] keys = g.keySet().toArray();
 		Arrays.sort(keys);		
-		assertEquals("[a, b, d, f, i, n, n1, n2, o, s]", Arrays.toString(keys));
-		assertEquals(10, g.size());
+		assertEquals("[a, b, d, f, i, javax.script.engine, javax.script.engine_version, " +
+			"javax.script.language, javax.script.language_version, javax.script.name, " +
+			"n, n1, n2, o, s]", Arrays.toString(keys));
+		assertEquals(15, g.size());
 		assertFalse(g.isEmpty());
 		
 		
@@ -179,5 +185,60 @@ public class V8ScriptEngineTest
 		
 		g.clear();
 		assertTrue(g.isEmpty());
+    }
+        
+    @Test
+    public void testGlobalBindings() throws ScriptException
+    {
+    	this.eng.eval("var a = 1");
+    	
+    	Bindings engineScope = this.eng.getBindings(ScriptContext.ENGINE_SCOPE);
+    	Bindings globalScope = this.eng.getBindings(ScriptContext.GLOBAL_SCOPE);
+    	
+    	assertNotNull(engineScope);
+    	assertNotNull(globalScope);
+    	
+    	assertTrue(engineScope.containsKey("a"));
+    	assertFalse(globalScope.containsKey("a"));
+    	assertFalse(globalScope.containsKey("b"));
+    	
+    	ScriptEngine engine = createScriptEngine();
+    	
+    	assertFalse(engine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey("a"));
+    	assertFalse(engine.getBindings(ScriptContext.GLOBAL_SCOPE).containsKey("b"));
+    }
+    
+    @Test
+    public void testJavaObjects() throws ScriptException, NoSuchMethodException
+    {
+    	this.eng.eval("function hello() { return 'hello ' + name; }" +
+    				  "function helloPerson() { return 'hello ' + person.name; };");
+    	
+    	Bindings engineScope = this.eng.getBindings(ScriptContext.ENGINE_SCOPE);
+    	
+    	Invocable invocable = (Invocable) this.eng;
+    	
+    	try {
+    		invocable.invokeFunction("hello");
+    		
+    		fail();
+    	} catch (ReferenceError e) {
+    		
+    	}
+    	
+    	class Person {
+			public String name = "flier";
+			
+			public String hello() {
+				return "hello " + this.name; 
+			}
+    	}
+    	
+    	assertEquals(null, engineScope.put("name", "flier"));
+    	assertEquals(null, engineScope.put("person", new Person()));
+    	
+    	assertEquals("hello flier", invocable.invokeFunction("hello"));
+    	assertEquals("hello flier", invocable.invokeFunction("helloPerson"));
+    	assertEquals("hello flier", invocable.invokeMethod(engineScope.get("person"), "hello"));
     }
 }

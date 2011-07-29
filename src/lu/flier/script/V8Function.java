@@ -17,7 +17,8 @@ public class V8Function extends V8Object
 	}
 	
 	public Object invoke(Object[] args) {
-		return this.ctxt.bind(internalInvoke(this.obj, this.thiz != null ? this.thiz.obj : 0, args));
+		Object result = internalInvoke(this.obj, this.thiz != null ? this.thiz.obj : 0, args);
+		return result == null ? null : this.ctxt.bind(result);
 	}
 
 	private native Object internalInvoke(long obj, long thiz, Object[] args);

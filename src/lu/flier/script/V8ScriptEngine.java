@@ -2,6 +2,7 @@ package lu.flier.script;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Method;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -111,7 +112,25 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 	public Object invokeMethod(Object thiz, String name, Object... args)
 			throws ScriptException, NoSuchMethodException 
 	{
-		return ((V8Function) ((V8Object) thiz).get(name)).invoke(args);		
+		if (thiz instanceof V8Object) {
+			return ((V8Function) ((V8Object) thiz).get(name)).invoke(args);
+		}
+		
+		Class<?>[] types = new Class<?>[args.length];
+		
+		for (int i=0; i<args.length; i++) {
+			types[i] = args[i].getClass();
+		}
+				
+		Method method = thiz.getClass().getMethod(name, types);
+		
+		if (method == null) throw new NoSuchMethodException(name);
+		
+		try {
+			return method.invoke(thiz, args);
+		} catch (Exception e) {
+			throw new ScriptException(e);
+		}
 	}
 
 	@Override

@@ -6,6 +6,8 @@
 #include <time.h>
 #include <stdlib.h>
 
+#include "Wrapper.h"
+
 namespace jni {
 
 const std::string Env::GetString(jstring str)
@@ -68,10 +70,10 @@ static struct {
   const char *name;
   const char *type;
 } SupportErrors[] = {
-  { "RangeError",     "java/lang/IndexOutOfBoundsException" },
-  { "ReferenceError", "java/lang/NullPointerException" },
-  { "SyntaxError",    "java/util/IllegalFormatException" },
-  { "TypeError",      "java/lang/NoSuchMethodException" }
+  { "RangeError",     "lu/flier/script/RangeError" },
+  { "ReferenceError", "lu/flier/script/ReferenceError" },
+  { "SyntaxError",    "lu/flier/script/SyntaxError" },
+  { "TypeError",      "lu/flier/script/TypeError" }
 };
 
 bool Env::ThrowIf(const v8::TryCatch& try_catch)
@@ -285,8 +287,12 @@ jobject V8Env::Wrap(v8::Handle<v8::Value> value)
   }
   if (value->IsNumber()) return NewDouble(value->NumberValue());
   if (value->IsDate()) return NewDate(v8::Handle<v8::Date>::Cast(value));
-  if (value->IsArray()) return NewV8Array(v8::Handle<v8::Array>::Cast(value->ToObject()));
-  if (value->IsFunction()) return NewV8Function(v8::Handle<v8::Function>::Cast(value->ToObject()));
+
+  v8::Handle<v8::Object> obj = value->ToObject();
+
+  if (value->IsArray()) return NewV8Array(v8::Handle<v8::Array>::Cast(obj));
+  if (value->IsFunction()) return NewV8Function(v8::Handle<v8::Function>::Cast(obj));
+  if (CManagedObject::IsWrapped(obj)) return CManagedObject::Unwrap(obj).GetObject();
 
   return NewV8Object(value->ToObject());
 }
@@ -325,8 +331,25 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
   {
     jmethodID mid = GetMethodID(clazz, "booleanValue", "()Z");
     result = v8::Boolean::New(m_env->CallBooleanMethod(value, mid));
-  } else {
+  }    
+  else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/reflect/Method")) == JNI_TRUE) 
+  {
+    result = CJavaFunction::Wrap(m_env, value);  
+  } 
+  else if (m_env->IsAssignableFrom(clazz, FindClass("lu/flier/script/V8Context")) == JNI_TRUE) 
+  {
+    result = CJavaContext::Wrap(m_env, value);  
+  } 
+  else 
+  { 
+    // TODO find why I can't get isArray
+    jmethodID mid = GetMethodID(FindClass("java/lang/Class"), "isArray", "()Z");
 
+    if (mid && m_env->CallBooleanMethod(m_env->GetObjectClass(value), mid)) {
+      result = CJavaArray::Wrap(m_env, value);
+    } else {
+      result = CJavaObject::Wrap(m_env, value);
+    }
   }
 
   return handle_scope.Close(result);

@@ -125,11 +125,17 @@ jboolean JNICALL Java_lu_flier_script_V8Context_inContext(JNIEnv *pEnv, jclass)
   return v8::Context::InContext() ? JNI_TRUE : JNI_FALSE;
 }
 
-jlong JNICALL Java_lu_flier_script_V8Context_internalCreate(JNIEnv *pEnv, jclass)
+jlong JNICALL Java_lu_flier_script_V8Context_internalCreate(JNIEnv *pEnv, jobject pObj)
 {
   jni::V8Env env(pEnv);
 
-  return (jlong) *v8::Persistent<v8::Context>::New(v8::Context::New());
+  v8::Handle<v8::Context> ctxt = v8::Context::New();
+
+  v8::Context::Scope context_scope(ctxt);
+
+  ctxt->Global()->Set(v8::String::NewSymbol("__proto__"), env.Wrap(pObj));
+
+  return (jlong) *v8::Persistent<v8::Context>::New(ctxt);
 }
 
 void JNICALL Java_lu_flier_script_V8Context_internalRelease
@@ -310,7 +316,7 @@ jobject JNICALL Java_lu_flier_script_V8Function_internalInvoke
   if (thiz.IsEmpty()) thiz = v8::Context::GetCurrent()->Global();
   std::vector< v8::Handle<v8::Value> > args = env.GetArray(pArgs);
 
-  v8::Handle<v8::Value> result = func->Call(thiz, args.size(), &args[0]);
+  v8::Handle<v8::Value> result = func->Call(thiz, args.size(), args.empty() ? NULL : &args[0]);
 
   return env.Wrap(result);
 }

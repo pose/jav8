@@ -13,6 +13,16 @@ class Env
 {
 protected:
   JNIEnv *m_env;
+  
+  const std::string Extract(const v8::TryCatch& try_catch);
+public:
+  Env(JNIEnv *env) : m_env(env) {}
+  virtual ~Env() {}
+
+  operator JNIEnv *() const { return m_env; }
+  JNIEnv *operator ->() { return m_env; }
+
+  const std::string GetString(jstring str);
 
   jclass FindClass(const char *name) { 
     // TODO cache it with TLS
@@ -34,19 +44,18 @@ protected:
     return m_env->GetMethodID(clazz, name, sig);
   }
 
+  jmethodID GetMethodID(const char * clazz, const char * name, const char *sig) {
+    return GetMethodID(FindClass(clazz), name, sig);
+  }
+
   jmethodID GetStaticMethodID(jclass clazz, const char * name, const char *sig) {
     // TODO cache it with TLS
     return m_env->GetStaticMethodID(clazz, name, sig);
   }
-  
-  const std::string Extract(const v8::TryCatch& try_catch);
-public:
-  Env(JNIEnv *env) : m_env(env) {}
-  virtual ~Env() {}
 
-  operator JNIEnv *() const { return m_env; }
-
-  const std::string GetString(jstring str);
+  jmethodID GetStaticMethodID(const char * clazz, const char * name, const char *sig) {
+    return GetStaticMethodID(FindClass(clazz), name, sig);
+  }
 
   jobject GetField(jobject obj, const char *name, const char *sig);
   jlong GetLongField(jobject obj, const char *name);
@@ -72,17 +81,19 @@ public:
 
 class V8Env : public Env {
   v8::HandleScope handle_scope;  
-  v8::TryCatch m_tc;
+  v8::TryCatch try_catch;
 public:
   V8Env(JNIEnv *env) : Env(env) {}
-  virtual ~V8Env() { ThrowIf(m_tc); }
+  virtual ~V8Env() { ThrowIf(try_catch); }
 
-  bool HasCaught() const { return m_tc.HasCaught(); }
+  bool HasCaught() const { return try_catch.HasCaught(); }
 
   std::vector< v8::Handle<v8::Value> > GetArray(jobjectArray array);
-
+  
   jobject Wrap(v8::Handle<v8::Value> value);
   v8::Handle<v8::Value> Wrap(jobject value);
+
+  v8::Handle<v8::Value> Close(v8::Handle<v8::Value> value) { return handle_scope.Close(value); }
 };
 
 } // namespace jni
