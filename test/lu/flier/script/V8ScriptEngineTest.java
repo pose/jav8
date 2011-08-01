@@ -3,6 +3,7 @@ package lu.flier.script;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -81,14 +82,14 @@ public class V8ScriptEngineTest
     }
     
     @Test
-    public void testArray() throws ScriptException 
+    public void testJavascriptArray() throws ScriptException, NoSuchMethodException 
     {    	
 		V8Array array = (V8Array) this.eng.eval("[1, 2, 3]");
 		
     	assertNotNull(array);
     	assertEquals(3, array.size());
     	assertEquals(1, array.get(0));
-    	assertEquals(null, array.get(4));    		
+    	assertEquals(null, array.get(4));    		    	    
     }
     
     @Test
@@ -212,7 +213,7 @@ public class V8ScriptEngineTest
     public void testJavaObjects() throws ScriptException, NoSuchMethodException
     {
     	this.eng.eval("function hello() { return 'hello ' + name; }" +
-    				  "function helloPerson() { return 'hello ' + person.name; };");
+    				  "function helloPerson() { person.name = 'flier'; return 'hello ' + person.name; };");
     	
     	Bindings engineScope = this.eng.getBindings(ScriptContext.ENGINE_SCOPE);
     	
@@ -227,18 +228,108 @@ public class V8ScriptEngineTest
     	}
     	
     	class Person {
-			public String name = "flier";
+			public String name;
 			
 			public String hello() {
 				return "hello " + this.name; 
 			}
     	}
     	
-    	assertEquals(null, engineScope.put("name", "flier"));
-    	assertEquals(null, engineScope.put("person", new Person()));
+    	Person person = new Person();
     	
-    	assertEquals("hello flier", invocable.invokeFunction("hello"));
+    	assertEquals(null, engineScope.put("name", "test"));
+    	assertEquals(null, engineScope.put("person", person));
+    	
+    	assertEquals("hello test", invocable.invokeFunction("hello"));
     	assertEquals("hello flier", invocable.invokeFunction("helloPerson"));
+    	assertEquals("flier", ((Person) engineScope.get("person")).name);
     	assertEquals("hello flier", invocable.invokeMethod(engineScope.get("person"), "hello"));
+    	
+    	// Named getter
+    	assertSame(person, this.eng.eval("person"));
+    	assertEquals("flier", this.eng.eval("person.name"));
+    	assertEquals(null, this.eng.eval("person.test"));
+    	
+    	// Named setter
+    	assertEquals("flier", person.name);
+    	assertEquals("test", this.eng.eval("person.name = 'test'"));
+    	assertEquals("test", person.name);
+    	
+    	// Named query
+    	assertTrue((Boolean) this.eng.eval("'name' in person"));
+    	assertTrue((Boolean) this.eng.eval("'hello' in person"));
+    	assertFalse((Boolean) this.eng.eval("'test' in person"));
+    	
+    	// Named deleter
+    	assertEquals("test", person.name);
+    	assertEquals(false, this.eng.eval("delete person.name;"));
+    	assertEquals(false, this.eng.eval("delete person['name'];"));
+    	assertEquals("test", person.name);
+    	
+    	// Named enumerator
+    	V8Array names = (V8Array) this.eng.eval("var names = []; for (var name in person) { names.push(name); } names;");
+    	
+    	assertNotNull(names);
+    	assertEquals(9, names.size());
+    	Object[] keys = names.toArray();
+    	Arrays.sort(keys);		
+    	assertEquals("[equals, getClass, hashCode, hello, name, notify, notifyAll, toString, wait]", Arrays.toString(keys));
+    }
+    
+    @Test
+    public void testJavaArray() throws ScriptException, NoSuchMethodException
+    {
+    	this.eng.eval("function test(array) { " +
+				"var n = 0;" +
+				"array[1] = 4;" +
+				"for (var i=0; i<array.length; i++) n += array[i]; " +
+				"return n; }");
+		
+		int[] array2 = new int[] { 1, 2, 3 };
+		
+		assertEquals(8, ((Invocable) this.eng).invokeFunction("test", array2));
+		assertEquals(4, array2[1]);
+		
+		Bindings g = this.eng.getBindings(ScriptContext.ENGINE_SCOPE);
+		
+		g.put("array", array2);
+		
+		// Indexed getter
+		assertEquals(1, this.eng.eval("array[0]"));
+		assertEquals(null, this.eng.eval("array[-1]"));
+		try {
+			this.eng.eval("array[100]");
+			fail();
+		} catch (ScriptException e) {  
+			assertEquals(ArrayIndexOutOfBoundsException.class, e.getCause().getCause().getClass());
+		}
+		
+		// Indexed setter
+		assertEquals(4, this.eng.eval("array[1]"));
+		assertEquals(2, this.eng.eval("array[1] = 2"));
+		assertEquals(2, this.eng.eval("array[1]"));
+		try {
+			this.eng.eval("array[100] = 100");
+			fail();
+		} catch (ScriptException e) {  
+			assertEquals(ArrayIndexOutOfBoundsException.class, e.getCause().getCause().getClass());
+		}
+		
+		// Indexed query
+		assertEquals(true, this.eng.eval("0 in array"));
+		assertEquals(true, this.eng.eval("2 in array"));
+		assertEquals(false, this.eng.eval("-1 in array"));
+		assertEquals(false, this.eng.eval("3 in array"));
+		
+		// Indexed deleter
+		assertEquals(2, this.eng.eval("array[1]"));
+		assertEquals(false, this.eng.eval("delete array[1]"));
+		assertEquals(2, this.eng.eval("array[1]"));
+		
+		// Indexed enumerator
+    	V8Array indexes = (V8Array) this.eng.eval("var indexes = []; for (var idx in array) { indexes.push(idx); } indexes;");
+
+    	assertEquals(4, indexes.size());
+    	assertEquals("[0, 1, 2, length]", Arrays.toString(indexes.toArray()));
     }
 }

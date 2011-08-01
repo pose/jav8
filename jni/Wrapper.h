@@ -57,7 +57,7 @@ protected:
   { return v8::Handle<v8::Integer>(); }
   static v8::Handle<v8::Boolean> NamedDeleter(
     v8::Local<v8::String> prop, const v8::AccessorInfo& info)
-  { return v8::Handle<v8::Boolean>(); }
+  { return v8::False(); }
   static v8::Handle<v8::Array> NamedEnumerator(const v8::AccessorInfo& info)
   { return v8::Handle<v8::Array>(); }
 
@@ -72,7 +72,7 @@ protected:
   { return v8::Handle<v8::Integer>(); }
   static v8::Handle<v8::Boolean> IndexedDeleter(
     uint32_t index, const v8::AccessorInfo& info)
-  { return v8::Handle<v8::Boolean>(); }
+  { return v8::False(); }
   static v8::Handle<v8::Array> IndexedEnumerator(const v8::AccessorInfo& info)
   { return v8::Handle<v8::Array>(); }
 
@@ -155,8 +155,6 @@ public:
     v8::Local<v8::String> prop, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
   static v8::Handle<v8::Integer> NamedQuery(
     v8::Local<v8::String> prop, const v8::AccessorInfo& info);
-  static v8::Handle<v8::Boolean> NamedDeleter(
-    v8::Local<v8::String> prop, const v8::AccessorInfo& info);
   static v8::Handle<v8::Array> NamedEnumerator(const v8::AccessorInfo& info);    
 };
 
@@ -165,6 +163,22 @@ class CJavaArray : public CBaseJavaObject<CJavaArray> {
 public:
   CJavaArray(JNIEnv *pEnv, jobject obj) : __base__(pEnv, obj) {
   }
+
+  size_t GetLength(void) { return m_pEnv->GetArrayLength((jarray) m_obj); }
+
+  static v8::Handle<v8::Value> NamedGetter(
+    v8::Local<v8::String> prop, const v8::AccessorInfo& info);
+  static v8::Handle<v8::Integer> NamedQuery(
+    v8::Local<v8::String> prop, const v8::AccessorInfo& info);
+  static v8::Handle<v8::Array> NamedEnumerator(const v8::AccessorInfo& info);    
+
+  static v8::Handle<v8::Value> IndexedGetter(
+    uint32_t index, const v8::AccessorInfo& info);
+  static v8::Handle<v8::Value> IndexedSetter(
+    uint32_t index, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
+  static v8::Handle<v8::Integer> IndexedQuery(
+    uint32_t index, const v8::AccessorInfo& info);
+  static v8::Handle<v8::Array> IndexedEnumerator(const v8::AccessorInfo& info);
 };
 
 class CJavaFunction : public CBaseJavaObject<CJavaFunction> {

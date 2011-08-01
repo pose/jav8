@@ -303,6 +303,8 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
 
   v8::Handle<v8::Value> result;
 
+  if (value == NULL) return handle_scope.Close(v8::Null());
+
   jclass clazz = m_env->GetObjectClass(value);
     
   if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/String")) == JNI_TRUE) 

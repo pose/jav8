@@ -93,7 +93,7 @@ public:
   jobject Wrap(v8::Handle<v8::Value> value);
   v8::Handle<v8::Value> Wrap(jobject value);
 
-  v8::Handle<v8::Value> Close(v8::Handle<v8::Value> value) { return handle_scope.Close(value); }
+  template <class T> v8::Local<T> Close(v8::Handle<T> value) { return handle_scope.Close(value); }
 };
 
 } // namespace jni
