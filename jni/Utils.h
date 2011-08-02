@@ -91,6 +91,7 @@ public:
   std::vector< v8::Handle<v8::Value> > GetArray(jobjectArray array);
   
   jobject Wrap(v8::Handle<v8::Value> value);
+  jobject Wrap(v8::Handle<v8::Object> value);
   v8::Handle<v8::Value> Wrap(jobject value);
 
   template <class T> v8::Local<T> Close(v8::Handle<T> value) { return handle_scope.Close(value); }

@@ -332,4 +332,20 @@ public class V8ScriptEngineTest
     	assertEquals(4, indexes.size());
     	assertEquals("[0, 1, 2, length]", Arrays.toString(indexes.toArray()));
     }
+        
+    @Test
+    public void testJavaFunction() throws ScriptException
+    {
+    	class Person {
+			public String hello(String name) {
+				return "hello " + name; 
+			}
+    	}
+    	
+    	Person person = new Person();
+    	
+    	this.eng.put("person", person);
+    	
+    	assertEquals("hello flier", this.eng.eval("person.hello('flier')"));
+    }
 }

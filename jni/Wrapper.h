@@ -29,7 +29,7 @@ public:
 
   static bool IsWrapped(v8::Handle<v8::Object> obj)
   {
-    return obj->InternalFieldCount() == 1;
+    return !obj.IsEmpty() && obj->InternalFieldCount() == 1;
   }
 
   static CManagedObject& Unwrap(v8::Handle<v8::Object> obj) 
@@ -181,12 +181,15 @@ public:
   static v8::Handle<v8::Array> IndexedEnumerator(const v8::AccessorInfo& info);
 };
 
-class CJavaFunction : public CBaseJavaObject<CJavaFunction> {
-  typedef CBaseJavaObject<CJavaFunction> __base__;
+class CJavaFunction : public CManagedObject {
+  typedef CManagedObject __base__;
 
 public:
   CJavaFunction(JNIEnv *pEnv, jobject obj) : __base__(pEnv, obj) {
   }
+
+  static v8::Handle<v8::Value> Wrap(JNIEnv *pEnv, jobject obj);
+  static v8::Handle<v8::Value> Caller(const v8::Arguments& args);
 };
 
 class CJavaContext : public CBaseJavaObject<CJavaContext> {

@@ -264,6 +264,37 @@ v8::Handle<v8::Array> CJavaArray::IndexedEnumerator(const v8::AccessorInfo& info
 
   return env.Close(result);
 }
+v8::Handle<v8::Value> CJavaFunction::Wrap(JNIEnv *pEnv, jobject obj)
+{
+  jni::V8Env env(pEnv);
+
+  v8::Handle<v8::FunctionTemplate> func_tmpl = v8::FunctionTemplate::New();    
+
+  func_tmpl->SetCallHandler(Caller, v8::External::New(new CJavaFunction(pEnv, obj)));
+
+  return env.Close(func_tmpl->GetFunction());
+}
+v8::Handle<v8::Value> CJavaFunction::Caller(const v8::Arguments& args) 
+{
+  CJavaFunction& func = *static_cast<CJavaFunction *>(v8::Handle<v8::External>::Cast(args.Data())->Value());
+
+  jni::V8Env env(func.GetEnv());
+
+  jobject thiz = CManagedObject::Unwrap(args.This()->ToObject()).GetObject();
+  
+  jobjectArray params = (jobjectArray) env->NewObjectArray(args.Length(), env.FindClass("java/lang/Object"), NULL);
+
+  for (size_t i=0; i<args.Length(); i++)
+  {
+    env->SetObjectArrayElement(params, i, env.Wrap(args[i]));
+  }
+  
+  jmethodID mid = env.GetMethodID(env->GetObjectClass(func.GetObject()), "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
+  
+  jobject result = env->CallObjectMethod(func.GetObject(), mid, thiz, params);
+
+  return env.Close(env.Wrap(result));  
+}
 /*
 v8::Handle<v8::Value> CJavaContext::NamedGetter(
   v8::Local<v8::String> prop, const v8::AccessorInfo& info)

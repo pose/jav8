@@ -288,13 +288,16 @@ jobject V8Env::Wrap(v8::Handle<v8::Value> value)
   if (value->IsNumber()) return NewDouble(value->NumberValue());
   if (value->IsDate()) return NewDate(v8::Handle<v8::Date>::Cast(value));
 
-  v8::Handle<v8::Object> obj = value->ToObject();
+  return Wrap(value->ToObject());
+}
 
-  if (value->IsArray()) return NewV8Array(v8::Handle<v8::Array>::Cast(obj));
-  if (value->IsFunction()) return NewV8Function(v8::Handle<v8::Function>::Cast(obj));
+jobject V8Env::Wrap(v8::Handle<v8::Object> obj)
+{
+  if (obj->IsArray()) return NewV8Array(v8::Handle<v8::Array>::Cast(obj));
+  if (obj->IsFunction()) return NewV8Function(v8::Handle<v8::Function>::Cast(obj));
   if (CManagedObject::IsWrapped(obj)) return CManagedObject::Unwrap(obj).GetObject();
 
-  return NewV8Object(value->ToObject());
+  return NewV8Object(obj);
 }
 
 v8::Handle<v8::Value> V8Env::Wrap(jobject value)
