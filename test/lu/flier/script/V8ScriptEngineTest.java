@@ -1,5 +1,6 @@
 package lu.flier.script;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -89,7 +90,9 @@ public class V8ScriptEngineTest
     	assertNotNull(array);
     	assertEquals(3, array.size());
     	assertEquals(1, array.get(0));
-    	assertEquals(null, array.get(4));    		    	    
+    	assertEquals(null, array.get(4));    		  
+    	
+    	assertArrayEquals(new Object[] {1, 2, 3}, array.toArray());    	
     }
     
     @Test
@@ -333,8 +336,12 @@ public class V8ScriptEngineTest
     	assertEquals("[0, 1, 2, length]", Arrays.toString(indexes.toArray()));
     }
         
+	public static String sprintf(String fmt, V8Array args) {		
+		return String.format(fmt, args.toArray());
+	}
+	
     @Test
-    public void testJavaFunction() throws ScriptException
+    public void testJavaFunction() throws ScriptException, SecurityException, NoSuchMethodException
     {
     	class Person {
 			public String hello(String name) {
@@ -345,7 +352,9 @@ public class V8ScriptEngineTest
     	Person person = new Person();
     	
     	this.eng.put("person", person);
+    	this.eng.put("sprintf", this.getClass().getMethod("sprintf", String.class, V8Array.class));
     	
     	assertEquals("hello flier", this.eng.eval("person.hello('flier')"));
+    	assertEquals("hello world, 42", this.eng.eval("sprintf('hello %s, %d', ['world', 42]);"));
     }
 }

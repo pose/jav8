@@ -10,6 +10,7 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
 	
 	V8Array(long obj) {
 		this.array = new ManagedV8Object(obj);
+		this.ctxt = V8Context.getCurrent();
 	}
 
 	@Override

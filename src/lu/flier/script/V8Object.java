@@ -15,6 +15,8 @@ public class V8Object extends ManagedV8Object implements Bindings, V8ContextAwar
 
 	public V8Object(long obj) {
 		super(obj);
+		
+		this.ctxt = V8Context.getCurrent();
 	}
 
 	@Override

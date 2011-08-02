@@ -280,7 +280,8 @@ v8::Handle<v8::Value> CJavaFunction::Caller(const v8::Arguments& args)
 
   jni::V8Env env(func.GetEnv());
 
-  jobject thiz = CManagedObject::Unwrap(args.This()->ToObject()).GetObject();
+  bool hasThiz = CManagedObject::IsWrapped(args.This()->ToObject());
+  jobject thiz = hasThiz ? CManagedObject::Unwrap(args.This()->ToObject()).GetObject() : NULL;
   
   jobjectArray params = (jobjectArray) env->NewObjectArray(args.Length(), env.FindClass("java/lang/Object"), NULL);
 
