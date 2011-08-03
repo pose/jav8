@@ -9,8 +9,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -81,20 +84,7 @@ public class V8ScriptEngineTest
         assertEquals("print(\"Hello world\")", factory.getOutputStatement("Hello world"));
         assertEquals("s1;s2;", factory.getProgram("s1", "s2"));
     }
-    
-    @Test
-    public void testJavascriptArray() throws ScriptException, NoSuchMethodException 
-    {    	
-		V8Array array = (V8Array) this.eng.eval("[1, 2, 3]");
-		
-    	assertNotNull(array);
-    	assertEquals(3, array.size());
-    	assertEquals(1, array.get(0));
-    	assertEquals(null, array.get(4));    		  
-    	
-    	assertArrayEquals(new Object[] {1, 2, 3}, array.toArray());    	
-    }
-    
+        
     @Test
     public void testCompile() throws ScriptException
     {
@@ -210,6 +200,36 @@ public class V8ScriptEngineTest
     	
     	assertFalse(engine.getBindings(ScriptContext.ENGINE_SCOPE).containsKey("a"));
     	assertFalse(engine.getBindings(ScriptContext.GLOBAL_SCOPE).containsKey("b"));
+    }
+
+    @Test
+    public void testJavascriptArray() throws ScriptException, NoSuchMethodException 
+    {    	
+		V8Array array = (V8Array) this.eng.eval("[1, 2, 3]");
+		
+    	assertNotNull(array);
+    	assertEquals(3, array.size());
+    	assertEquals(1, array.get(0));
+    	assertEquals(null, array.get(4));    		  
+    	
+    	assertArrayEquals(new Object[] {1, 2, 3}, array.toArray());    	
+    }
+    
+    @Test
+    public void testDate() throws ScriptException, NoSuchMethodException
+    {
+    	Calendar cal = Calendar.getInstance();
+    	
+    	cal.set(2011, 8-1, 3, 0, 0, 0);
+    	cal.set(Calendar.MILLISECOND, 0);
+    	
+    	Date d = (Date) this.eng.eval("var d = new Date(); d.setTime(Date.parse('2011-8-3')); d");
+    	
+    	assertEquals(cal.getTime(), d);
+    	
+    	this.eng.eval("function test(d) { return d.getTime() == Date.parse('2011-8-3'); }");
+    	
+    	assertTrue((Boolean) ((Invocable) this.eng).invokeFunction("test", cal.getTime()));
     }
     
     @Test
@@ -332,10 +352,18 @@ public class V8ScriptEngineTest
 		// Indexed enumerator
     	V8Array indexes = (V8Array) this.eng.eval("var indexes = []; for (var idx in array) { indexes.push(idx); } indexes;");
 
-    	assertEquals(4, indexes.size());
-    	assertEquals("[0, 1, 2, length]", Arrays.toString(indexes.toArray()));
+    	assertEquals(3, indexes.size());
+    	assertEquals("[0, 1, 2]", Arrays.toString(indexes.toArray()));
     }
-        
+    
+    public static void print(String str) {
+    	System.out.print(str);
+    }
+    
+    public static void println(String str) {
+    	System.out.println(str);
+    }
+            
 	public static String sprintf(String fmt, V8Array args) {		
 		return String.format(fmt, args.toArray());
 	}
@@ -356,5 +384,110 @@ public class V8ScriptEngineTest
     	
     	assertEquals("hello flier", this.eng.eval("person.hello('flier')"));
     	assertEquals("hello world, 42", this.eng.eval("sprintf('hello %s, %d', ['world', 42]);"));
+    }
+    
+    @Test
+    public void testCodeExamples() throws SecurityException, NoSuchMethodException, ScriptException
+    {
+    	// Scripting for the Java Platform
+    	//
+    	// http://java.sun.com/developer/technicalArticles/J2SE/Desktop/scripting/
+    	
+    	// Code Example 1: Create a ScriptEngine object using the engine name.
+    	//
+    	ScriptEngineManager mgr = new ScriptEngineManager();
+    	ScriptEngine jsEngine = mgr.getEngineByName("jav8");
+    	
+    	jsEngine.put("print", this.getClass().getMethod("print", String.class));
+    	jsEngine.put("println", this.getClass().getMethod("println", String.class));
+    
+    	jsEngine.eval("print('Hello, world!')");
+    	
+    	// Code Example 2: You can retrieve a list of all engines installed to your Java platform.
+    	//
+    	List<ScriptEngineFactory> factories = mgr.getEngineFactories();
+    	
+    	assertFalse(factories.isEmpty());
+    	
+    	// Code Example 3: A ScriptEngineFactory object provides detailed information about the engine it provides.
+    	//
+    	for (ScriptEngineFactory factory: factories) {
+    	    System.out.println("ScriptEngineFactory Info");
+    	    
+    	    String engName = factory.getEngineName();
+    	    String engVersion = factory.getEngineVersion();
+    	    String langName = factory.getLanguageName();
+    	    String langVersion = factory.getLanguageVersion();
+    	    System.out.printf("\tScript Engine: %s (%s)\n", engName, engVersion);
+    	    
+    	    List<String> engNames = factory.getNames();
+    	    for(String name: engNames) {
+    	      System.out.printf("\tEngine Alias: %s\n", name);
+    	    }
+    	    System.out.printf("\tLanguage: %s (%s)\n", langName, langVersion);
+    	}
+    	    	
+    	// Code Example 6: The eval method can read script files.
+    	//
+    	InputStream is = this.getClass().getResourceAsStream("/scripts/F1.js");
+    	/*
+    	try {
+    	    Reader reader = new InputStreamReader(is);
+    	    engine.eval(reader);
+    	} catch (ScriptException ex) {
+    	    ex.printStackTrace();
+    	}
+    	*/
+    	// Code Example 7: You can use the Invocable interface to call specific methods in a script.
+    	//
+    	jsEngine.eval("function sayHello() {" +
+                 	  "  println('Hello, world!');" +
+                 	  "}");
+    	Invocable invocableEngine = (Invocable) jsEngine;
+    	invocableEngine.invokeFunction("sayHello");
+    	
+    	// Code Example 8: Java programming language code adds names to a list.
+    	//
+    	List<String> namesList = new ArrayList<String>();
+    	
+    	namesList.add("Jill");
+    	namesList.add("Bob");
+    	namesList.add("Laureen");
+    	namesList.add("Ed");
+    	
+    	// Code Example 9: Script code can both access and modify native Java objects.
+    	//
+    	jsEngine.put("namesListKey", namesList);
+    	  
+    	System.out.println("Executing in script environment...");
+    	
+    	jsEngine.eval("var x;" +
+	                  "var names = namesListKey.toArray();" +
+	                  "for(x in names) {" +
+	                  //"  println(names[x]);" +
+	                  "}" +
+	                  "namesListKey.add('Dana');");
+    	
+    	System.out.println("Executing in Java environment...");
+    	
+    	for (String name: namesList) {
+    	    System.out.println(name);
+    	}  
+    	
+    	// Code Example 10: Applications can pass values to script using the Invocable interface.
+    	//  	    	
+	    jsEngine.eval("function printNames1(namesList) {" +
+	                  "  var x;" +
+	                  "  var names = namesList.toArray();" +
+	                  "  for(x in names) {" +
+	                  "    println(names[x]);" +
+	                  "  }" +
+	                  "}" +
+
+	                  "function addName(namesList, name) {" +
+	                  "  namesList.add(name);" +
+	                  "}");
+	    invocableEngine.invokeFunction("printNames1", namesList);
+	    invocableEngine.invokeFunction("addName", namesList, "Dana");
     }
 }

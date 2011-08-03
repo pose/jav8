@@ -6,6 +6,7 @@
 #include <time.h>
 #include <stdlib.h>
 
+#include "Config.h"
 #include "Wrapper.h"
 
 namespace jni {
@@ -161,7 +162,7 @@ jobject Env::NewObject(const char *name, const char *sig, ...)
   return m_env->NewObjectV(clazz, cid, args);
 }
 
-jobjectArray Env::NewObjectArray(const char *name, size_t size, jobject init)
+jobjectArray Env::NewObjectArray(size_t size, const char *name, jobject init)
 {
   jclass clazz = FindClass(name);
   return m_env->NewObjectArray(size, clazz, init);
@@ -216,7 +217,7 @@ jobject Env::NewDate(v8::Handle<v8::Date> date)
 {
   jclass clazz = FindClass("java/util/Date");
   jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
-  jlong value = floor(date->NumberValue() / 1000);
+  jlong value = floor(date->NumberValue());
   jobject result = m_env->NewObject(clazz, cid, value);
   m_env->DeleteLocalRef(clazz);
 
@@ -285,15 +286,37 @@ jobject V8Env::Wrap(v8::Handle<v8::Value> value)
 
     return m_env->NewStringUTF(*str);
   }
-  if (value->IsNumber()) return NewDouble(value->NumberValue());
   if (value->IsDate()) return NewDate(v8::Handle<v8::Date>::Cast(value));
+  if (value->IsNumber()) return NewDouble(value->NumberValue());
 
   return Wrap(value->ToObject());
 }
 
 jobject V8Env::Wrap(v8::Handle<v8::Object> obj)
 {
-  if (obj->IsArray()) return NewV8Array(v8::Handle<v8::Array>::Cast(obj));
+  assert(v8::Context::InContext());
+
+  v8::HandleScope handle_scope;
+
+  if (obj->IsArray())
+  {
+  #ifdef USE_NATIVE_ARRAY
+    v8::Handle<v8::Array> array = v8::Handle<v8::Array>::Cast(obj);
+
+    jobjectArray items = NewObjectArray(array->Length());
+
+    for (size_t i=0; i<array->Length(); i++)
+    {      
+      jobject item = Wrap(array->Get(i));
+      m_env->SetObjectArrayElement(items, i, item);
+      m_env->DeleteLocalRef(item);
+    }
+
+    return items;
+  #else
+    return NewV8Array(v8::Handle<v8::Array>::Cast(obj));
+  #endif
+  }
   if (obj->IsFunction()) return NewV8Function(v8::Handle<v8::Function>::Cast(obj));
   if (CManagedObject::IsWrapped(obj)) return CManagedObject::Unwrap(obj).GetObject();
 
@@ -303,10 +326,11 @@ jobject V8Env::Wrap(v8::Handle<v8::Object> obj)
 v8::Handle<v8::Value> V8Env::Wrap(jobject value)
 {
   v8::HandleScope handle_scope;
-
-  v8::Handle<v8::Value> result;
+  v8::TryCatch try_catch;
 
   if (value == NULL) return handle_scope.Close(v8::Null());
+
+  v8::Handle<v8::Value> result;
 
   jclass clazz = m_env->GetObjectClass(value);
     
@@ -319,7 +343,8 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
 
     m_env->ReleaseStringUTFChars(str, p);
   }
-  else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/Integer")) == JNI_TRUE ||
+  else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/Long")) == JNI_TRUE ||
+           m_env->IsAssignableFrom(clazz, FindClass("java/lang/Integer")) == JNI_TRUE ||
            m_env->IsAssignableFrom(clazz, FindClass("java/lang/Short")) == JNI_TRUE ||
            m_env->IsAssignableFrom(clazz, FindClass("java/lang/Byte")) == JNI_TRUE) 
   {
@@ -336,7 +361,12 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
   {
     jmethodID mid = GetMethodID(clazz, "booleanValue", "()Z");
     result = v8::Boolean::New(m_env->CallBooleanMethod(value, mid));
-  }    
+  }      
+  else if (m_env->IsAssignableFrom(clazz, FindClass("java/util/Date")) == JNI_TRUE)
+  {
+    jmethodID mid = GetMethodID("java/util/Date", "getTime", "()J");
+    result = v8::Date::New(m_env->CallLongMethod(value, mid));
+  }
   else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/reflect/Method")) == JNI_TRUE) 
   {
     result = CJavaFunction::Wrap(m_env, value);  
@@ -347,28 +377,39 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
   } 
   else 
   { 
-    // TODO find why I can't get isArray
-    jmethodID mid = GetMethodID(FindClass("java/lang/Class"), "isArray", "()Z");
+    static jmethodID mid = GetMethodID("java/lang/Class", "isArray", "()Z");
 
-    if (mid && m_env->CallBooleanMethod(m_env->GetObjectClass(value), mid)) {
+    if (m_env->CallBooleanMethod(m_env->GetObjectClass(value), mid)) {
+    #ifdef USE_NATIVE_ARRAY
+      size_t len = m_env->GetArrayLength((jarray) value);
+      v8::Handle<v8::Array> items = v8::Array::New(len);
+
+      for (size_t i=0; i<len; i++)
+      {
+        jobject item = m_env->GetObjectArrayElement((jobjectArray) value, i);
+
+        items->Set(i, Wrap(item));
+      }
+
+      result = items;
+    #else
       result = CJavaArray::Wrap(m_env, value);
+    #endif
     } else {
       result = CJavaObject::Wrap(m_env, value);
     }
   }
 
-  return handle_scope.Close(result);
+  return ThrowIf(try_catch) ? v8::Handle<v8::Value>() : handle_scope.Close(result);
 }
 
 std::vector< v8::Handle<v8::Value> > V8Env::GetArray(jobjectArray array)
 {
-  v8::HandleScope handle_scope;
-
   std::vector< v8::Handle<v8::Value> > items(m_env->GetArrayLength(array));
 
   for (size_t i=0; i<items.size(); i++)
   {
-    items[i] = handle_scope.Close(Wrap(m_env->GetObjectArrayElement(array, i)));
+    items[i] = Wrap(m_env->GetObjectArrayElement(array, i));
   }
 
   return items;

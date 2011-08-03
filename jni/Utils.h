@@ -61,8 +61,15 @@ public:
   jlong GetLongField(jobject obj, const char *name);
   jobject GetStaticField(jobject obj, const char *name, const char *sig);
 
+  bool IsAssignableFrom(jclass sub, const char *sup) {
+    return m_env->IsAssignableFrom(sub, FindClass(sup)) == JNI_TRUE;
+  }
+  bool IsAssignableFrom(const char * sub, jclass sup) {
+    return m_env->IsAssignableFrom(FindClass(sub), sup) == JNI_TRUE;
+  }
+
   jobject NewObject(const char *name, const char *sig = "()V", ...);
-  jobjectArray NewObjectArray(const char *name, size_t size, jobject init = NULL);
+  jobjectArray NewObjectArray(size_t size, const char *name = "java/lang/Object", jobject init = NULL);
   
   jobject NewBoolean(jboolean value);
   jobject NewInt(jint value);

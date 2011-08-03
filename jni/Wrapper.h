@@ -135,8 +135,11 @@ public:
 class CJavaObject : public CBaseJavaObject<CJavaObject> {
   typedef CBaseJavaObject<CJavaObject> __base__;
 
+  typedef std::vector<jclass> types_t;
+  typedef std::pair<jobject, types_t> method_t;
+
   typedef std::map<std::string, jobject> fields_t;
-  typedef std::map<std::string, objects_t> methods_t;
+  typedef std::map<std::string, std::vector<method_t> > methods_t;
 
   fields_t m_fields;
   methods_t m_methods;
@@ -170,8 +173,7 @@ public:
     v8::Local<v8::String> prop, const v8::AccessorInfo& info);
   static v8::Handle<v8::Integer> NamedQuery(
     v8::Local<v8::String> prop, const v8::AccessorInfo& info);
-  static v8::Handle<v8::Array> NamedEnumerator(const v8::AccessorInfo& info);    
-
+  
   static v8::Handle<v8::Value> IndexedGetter(
     uint32_t index, const v8::AccessorInfo& info);
   static v8::Handle<v8::Value> IndexedSetter(
@@ -181,14 +183,45 @@ public:
   static v8::Handle<v8::Array> IndexedEnumerator(const v8::AccessorInfo& info);
 };
 
-class CJavaFunction : public CManagedObject {
+class CJavaFunction {
   typedef CManagedObject __base__;
 
+  typedef std::vector<jclass> types_t;
+  typedef std::pair<jobject, types_t> method_t;
+  typedef std::vector<method_t> methods_t;
+
+  JNIEnv *m_pEnv;
+  methods_t m_methods;
+
+  bool CanConvert(jclass clazz, v8::Handle<v8::Value> value);
 public:
-  CJavaFunction(JNIEnv *pEnv, jobject obj) : __base__(pEnv, obj) {
+  CJavaFunction(JNIEnv *pEnv, jobject obj);
+  CJavaFunction(JNIEnv *pEnv, const methods_t& methods) 
+    : m_pEnv(pEnv), m_methods(methods)
+  {
+  }
+  virtual ~CJavaFunction(void)
+  {
+    ReleaseMethods(m_pEnv, m_methods);
   }
 
-  static v8::Handle<v8::Value> Wrap(JNIEnv *pEnv, jobject obj);
+  JNIEnv *GetEnv(void) { return m_pEnv; }
+  jobject GetMethod(const v8::Arguments& args);
+
+  static void ReleaseMethods(JNIEnv *pEnv, const methods_t& methods);
+  static const types_t GetParameterTypes(JNIEnv *pEnv, jobject method);
+
+  template <typename T>
+  static v8::Handle<v8::Value> Wrap(JNIEnv *pEnv, T methods)
+  {
+    jni::V8Env env(pEnv);
+
+    v8::Handle<v8::FunctionTemplate> func_tmpl = v8::FunctionTemplate::New();    
+
+    func_tmpl->SetCallHandler(Caller, v8::External::New(new CJavaFunction(pEnv, methods)));
+
+    return env.Close(func_tmpl->GetFunction());
+  }
   static v8::Handle<v8::Value> Caller(const v8::Arguments& args);
 };
 

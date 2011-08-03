@@ -88,6 +88,7 @@
     <ClCompile Include="Wrapper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Config.h" />
     <ClInclude Include="jav8.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Wrapper.h" />

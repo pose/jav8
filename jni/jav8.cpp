@@ -6,6 +6,7 @@
 
 #include <v8.h>
 
+#include "Config.h"
 #include "Utils.h"
 
 void JNICALL Java_lu_flier_script_ManagedV8Object_internalRelease
@@ -39,6 +40,12 @@ jobject JNICALL Java_lu_flier_script_V8ScriptEngineFactory_getParameter(JNIEnv *
     return pEnv->NewStringUTF("ECMAScript");
   if (name == "javax.script.language_version")
     return pEnv->NewStringUTF("1.8.5");
+  if (name == "jav8.native_array")  
+  #if USE_NATIVE_ARRAY
+    return env.NewBoolean(true);
+  #else
+    return env.NewBoolean(false);
+  #endif
 
   env.Throw("java/lang/IllegalArgumentException", "Invalid key");
 
@@ -186,7 +193,7 @@ jobjectArray JNICALL Java_lu_flier_script_V8Object_internalGetKeys(JNIEnv *pEnv,
   v8::Persistent<v8::Object> obj((v8::Object *) env.GetLongField(pObj, "obj"));
 
   v8::Handle<v8::Array> names = obj->GetPropertyNames();
-  jobjectArray keys = env.NewObjectArray("java/lang/String", names->Length());
+  jobjectArray keys = env.NewObjectArray(names->Length(), "java/lang/String");
 
   for (size_t i=0; i<names->Length(); i++)
   {

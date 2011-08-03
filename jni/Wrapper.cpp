@@ -15,10 +15,7 @@ CJavaObject::~CJavaObject(void)
 
   for (methods_t::const_iterator it = m_methods.begin(); it != m_methods.end(); it++)
   {
-    for (size_t i=0; i<it->second.size(); i++)
-    {
-      m_pEnv->DeleteGlobalRef(it->second[i]);
-    }
+    CJavaFunction::ReleaseMethods(m_pEnv, it->second);
   }
 }
 
@@ -48,18 +45,20 @@ void CJavaObject::CacheNames(void)
   mid = env.GetMethodID("java/lang/Class", "getMethods", "()[Ljava/lang/reflect/Method;");
   jobjectArray methods = (jobjectArray) m_pEnv->CallObjectMethod(env->GetObjectClass(m_obj), mid);
 
+  jclass clazz = env.FindClass("java/lang/reflect/Method");
   mid = NULL;
+
   for (size_t i=0; i<env->GetArrayLength(methods); i++)
   {
     jobject method = env->GetObjectArrayElement(methods, i);
 
-    if (!mid) {
-      mid = env.GetMethodID("java/lang/reflect/Method", "getName", "()Ljava/lang/String;");
-    }
-
+    mid = env.GetMethodID(clazz, "getName", "()Ljava/lang/String;");
+    
     std::string name = env.GetString((jstring) env->CallObjectMethod(method, mid));
 
-    m_methods[name].push_back(env->NewGlobalRef(method));
+    const types_t& types = CJavaFunction::GetParameterTypes(env, method);
+
+    m_methods[name].push_back(std::make_pair(env->NewGlobalRef(method), types));
 
     env->DeleteLocalRef(method);
   }
@@ -87,7 +86,7 @@ v8::Handle<v8::Value> CJavaObject::NamedGetter(
     methods_t::const_iterator it = obj.m_methods.find(*name);
 
     if (it != obj.m_methods.end()) {
-      return env.Close(CJavaFunction::Wrap(obj.m_pEnv, it->second[0]));
+      return env.Close(CJavaFunction::Wrap(obj.m_pEnv, it->second));
     }
   }
 
@@ -196,18 +195,6 @@ v8::Handle<v8::Integer> CJavaArray::NamedQuery(
 
   return __base__::NamedQuery(prop, info);
 }
-v8::Handle<v8::Array> CJavaArray::NamedEnumerator(const v8::AccessorInfo& info)
-{
-  CJavaArray& obj = Unwrap(info.Holder());
-
-  jni::V8Env env(obj.m_pEnv);
-
-  v8::Handle<v8::Array> result = v8::Array::New(1);
-
-  result->Set(v8::Uint32::New(0), v8::String::NewSymbol("length"));
-
-  return env.Close(result);
-}
 
 v8::Handle<v8::Value> CJavaArray::IndexedGetter(
   uint32_t index, const v8::AccessorInfo& info)
@@ -264,16 +251,124 @@ v8::Handle<v8::Array> CJavaArray::IndexedEnumerator(const v8::AccessorInfo& info
 
   return env.Close(result);
 }
-v8::Handle<v8::Value> CJavaFunction::Wrap(JNIEnv *pEnv, jobject obj)
+CJavaFunction::CJavaFunction(JNIEnv *pEnv, jobject obj)
+  : m_pEnv(pEnv)
 {
-  jni::V8Env env(pEnv);
-
-  v8::Handle<v8::FunctionTemplate> func_tmpl = v8::FunctionTemplate::New();    
-
-  func_tmpl->SetCallHandler(Caller, v8::External::New(new CJavaFunction(pEnv, obj)));
-
-  return env.Close(func_tmpl->GetFunction());
+  m_methods.push_back(std::make_pair(m_pEnv->NewGlobalRef(obj), GetParameterTypes(m_pEnv, obj)));
 }
+void CJavaFunction::ReleaseMethods(JNIEnv *pEnv, const methods_t& methods)
+{
+  for (size_t i=0; i<methods.size(); i++)
+  {
+    pEnv->DeleteGlobalRef(methods[i].first);
+
+    const types_t& types = methods[i].second;
+
+    for (size_t j=0; j<types.size(); j++)
+    {
+      pEnv->DeleteGlobalRef(types[j]);
+    }
+  }
+}
+const CJavaFunction::types_t CJavaFunction::GetParameterTypes(JNIEnv *pEnv, jobject method)
+{
+  jni::Env env(pEnv);
+
+  jmethodID mid = env.GetMethodID("java/lang/reflect/Method", "getParameterTypes", "()[Ljava/lang/Class;");
+
+  jobjectArray classes = (jobjectArray) env->CallObjectMethod(method, mid);
+
+  types_t types(env->GetArrayLength(classes));
+
+  for (size_t j=0; j<types.size(); j++)
+  {
+    jobject type = env->GetObjectArrayElement(classes, j);
+
+    types[j] = (jclass) env->NewGlobalRef(type);
+
+    env->DeleteLocalRef(type);
+  }
+
+  return types;
+}
+jobject CJavaFunction::GetMethod(const v8::Arguments& args)
+{
+  jni::V8Env env(m_pEnv);
+
+  jobject method = NULL;
+
+  if (m_methods.size() > 1)
+  {
+    for (size_t i=0; i<m_methods.size(); i++)
+    {      
+      const types_t& types = m_methods[i].second;
+
+      if (types.size() == args.Length())
+      {
+        bool same = true;
+
+        method = m_methods[i].first;
+
+        for (size_t j=0; j<types.size(); j++)
+        {
+          if (!CanConvert(types[j], args[j]))
+          {
+            same = false;
+            break;
+          }
+        }
+
+        if (same) break;
+      }
+    }
+  }
+  else
+  {
+    method = m_methods[0].first;
+  }
+
+  return method;
+}
+bool CJavaFunction::CanConvert(jclass clazz, v8::Handle<v8::Value> value)
+{
+  jni::V8Env env(m_pEnv);
+
+  if (value->IsTrue() || value->IsFalse() || value->IsBoolean())
+  {
+    return env.IsAssignableFrom("java/lang/Boolean", clazz);
+  }
+  else if (value->IsInt32() || value->IsUint32())
+  {
+    return env.IsAssignableFrom("java/lang/Long", clazz) ||
+           env.IsAssignableFrom("java/lang/Integer", clazz) ||
+           env.IsAssignableFrom("java/lang/Short", clazz) ||
+           env.IsAssignableFrom("java/lang/Byte", clazz);
+  }
+  else if (value->IsNumber())
+  {
+    return env.IsAssignableFrom("java/lang/Double", clazz) ||
+           env.IsAssignableFrom("java/lang/Float", clazz);
+  }
+  else if (value->IsString())
+  {
+    return env.IsAssignableFrom("java/lang/String", clazz);
+  }
+  else if (value->IsDate())
+  {
+    return env.IsAssignableFrom("java/util/Date", clazz);
+  }
+  else if (value->IsArray())
+  {
+    return env.IsAssignableFrom("lu/flier/script/V8Array", clazz);
+  }
+  else if (value.IsEmpty() || value->IsNull() || value->IsUndefined() || value->IsObject())
+  {
+    return true;
+  }
+  
+  return false;
+}
+
 v8::Handle<v8::Value> CJavaFunction::Caller(const v8::Arguments& args) 
 {
   CJavaFunction& func = *static_cast<CJavaFunction *>(v8::Handle<v8::External>::Cast(args.Data())->Value());
@@ -283,16 +378,17 @@ v8::Handle<v8::Value> CJavaFunction::Caller(const v8::Arguments& args)
   bool hasThiz = CManagedObject::IsWrapped(args.This()->ToObject());
   jobject thiz = hasThiz ? CManagedObject::Unwrap(args.This()->ToObject()).GetObject() : NULL;
   
-  jobjectArray params = (jobjectArray) env->NewObjectArray(args.Length(), env.FindClass("java/lang/Object"), NULL);
+  jobjectArray params = (jobjectArray) env.NewObjectArray(args.Length());
 
   for (size_t i=0; i<args.Length(); i++)
   {
     env->SetObjectArrayElement(params, i, env.Wrap(args[i]));
   }
   
-  jmethodID mid = env.GetMethodID(env->GetObjectClass(func.GetObject()), "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
+  jobject method = func.GetMethod(args);
+  jmethodID mid = env.GetMethodID(env->GetObjectClass(method), "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
   
-  jobject result = env->CallObjectMethod(func.GetObject(), mid, thiz, params);
+  jobject result = env->CallObjectMethod(method, mid, thiz, params);
 
   return env.Close(env.Wrap(result));  
 }
