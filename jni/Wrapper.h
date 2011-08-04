@@ -2,10 +2,13 @@
 
 #include <map>
 #include <vector>
+#include <string>
 
 #include <jni.h>
 
 #include <v8.h>
+
+#include "Utils.h"
 
 namespace jni {
 

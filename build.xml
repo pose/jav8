@@ -3,8 +3,8 @@
 	<property environment="env"/>
 	
 	<property name="project.name" value="jav8"/>
-	<property name="project.version" value="0.1"/>
-	<property name="project.mode" value="debug" />
+	<property name="project.version" value="0.2"/>
+	<property name="project.mode" value="release" />
 	
 	<property name="src.dir" value="${basedir}/src" />
 	<property name="docs.dir" value="${basedir}/docs" />	
@@ -27,6 +27,13 @@
 	<condition property="is_unix">
 		<os family="unix" />
 	</condition>	
+	<condition property="is_debug">
+		<equals arg1="${project.mode}" arg2="debug"/>
+	</condition>
+	
+	<condition property="lib.v8" value="v8_g" else="v8">
+		<istrue value="${is_debug}"/>
+	</condition>
 		
 	<property file="${basedir}/build.properties" />
 
@@ -86,8 +93,8 @@
 		<cpptasks:cc name="${cc.compiler}"
 			objdir="${bin.dir}" outfile="${project.name}" 
 			runtime="static" link="static" outtype="shared" 
-			multithreaded="true" optimize="speed" incremental="true" 
-			debug="true" exceptions="true" rtti="true">			
+			multithreaded="true" optimize="speed" incremental="${is_win}"
+			debug="${is_debug}" exceptions="true" rtti="true">			
 			<fileset dir="${jni.dir}" includes="*.cpp"/>			
 
 			<compilerarg value="/GL" if="is_win"/>
@@ -102,12 +109,14 @@
 					<pathelement path="${env.V8_HOME}/include"/>
 				</path>
 			</includepath>
-			<libset libs="winmm,ws2_32"/>
-			<libset dir="${env.V8_HOME}" libs="v8_g"/>
+			<libset libs="winmm,ws2_32" if="is_win"/>
+			<libset libs="stdc++" if="is_unix"/>
+			<libset dir="${env.V8_HOME}" libs="${lib.v8}"/>
 		</cpptasks:cc>
 		
-		<copy todir="${basedir}">
+		<copy todir="${classes.dir}">
 			<fileset dir="${out.dir}" file="*.dll"/>
+			<fileset dir="${out.dir}" file="*.so"/>
 		</copy>
 	</target>
 	<target name="jar" depends="jni">
@@ -127,7 +136,7 @@
 			<include name="**/*.java"/>
 		</javac>				
 		<junit printsummary="yes" haltonfailure="yes" fork="yes">
-			<env key="PATH" path="${java.library.path};${bin.dir}"/>
+			<jvmarg value="-Djava.library.path=${basedir}" />
 			<formatter type="plain" usefile="flase" />
 			<formatter type="xml"/>
 			<test name="lu.flier.script.V8ScriptEngineTest" todir="${test.report.dir}" />

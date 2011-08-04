@@ -3,11 +3,16 @@
 #include <cassert>
 #include <sstream>
 
-#include <time.h>
+#include <math.h>
+#include <string.h>
 #include <stdlib.h>
 
 #include "Config.h"
 #include "Wrapper.h"
+
+#ifndef _countof
+#  define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+#endif
 
 namespace jni {
 
@@ -97,7 +102,7 @@ bool Env::ThrowIf(const v8::TryCatch& try_catch)
 
         for (size_t i=0; i<_countof(SupportErrors); i++)
         {
-          if (strnicmp(SupportErrors[i].name, *s, s.length()) == 0)
+          if (strncmp(SupportErrors[i].name, *s, s.length()) == 0)
           {
             type = SupportErrors[i].type;
             break;

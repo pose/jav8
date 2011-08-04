@@ -1,5 +1,7 @@
 #include "Wrapper.h"
 
+#include <string.h>
+
 #include "Utils.h"
 
 namespace jni {
