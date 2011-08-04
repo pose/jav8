@@ -107,8 +107,8 @@ public class V8ScriptEngineTest
     
     public interface IPerson {
     	String say(String name);
-    }
-    	
+    }    
+
     @Test
     public void testInvoke() throws ScriptException, NoSuchMethodException, IOException 
     {
@@ -127,8 +127,8 @@ public class V8ScriptEngineTest
     		invocable.invokeFunction("nonexist");
     		fail();
     	} catch (NoSuchMethodException e) {    		
-    	}    	
-    	
+    	}
+    	    	
     	IHello hello = invocable.getInterface(IHello.class);
     	
     	assertNotNull(hello);
@@ -143,7 +143,7 @@ public class V8ScriptEngineTest
 		assertEquals("Flier say, hello baby", invocable.invokeMethod(me, "say", "baby"));
 		
 		IPerson person = invocable.getInterface(me, IPerson.class);
-		
+				
 		assertNotNull(person);
 		assertEquals("Flier say, hello baby", person.say("baby"));
     }    

@@ -147,7 +147,7 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 	}
 
 	@Override
-	public <T> T getInterface(Class<T> clasz) {
+	public <T> T getInterface(Class<T> clasz) {		
         if (clasz == null || !clasz.isInterface()) {
             throw new IllegalArgumentException("interface Class expected");
         }
@@ -164,7 +164,7 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 	}
 
 	@Override
-	public <T> T getInterface(Object thiz, Class<T> clasz) {
+	public <T> T getInterface(final Object thiz, Class<T> clasz) {
         if (thiz == null) {
             throw new IllegalArgumentException("script object can not be null");
         }
@@ -177,7 +177,7 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 			@Override
 			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 				
-				return invokeMethod(proxy, method.getName(), args);
+				return invokeMethod(thiz, method.getName(), args);
 			}
 			
 		}));

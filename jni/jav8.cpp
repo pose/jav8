@@ -321,7 +321,9 @@ jobject JNICALL Java_lu_flier_script_V8Function_internalInvoke
   v8::Handle<v8::Object> thiz = v8::Persistent<v8::Object>((v8::Object *) pThiz);
 
   if (thiz.IsEmpty()) thiz = v8::Context::GetCurrent()->Global();
-  std::vector< v8::Handle<v8::Value> > args = env.GetArray(pArgs);
+  std::vector< v8::Handle<v8::Value> > args;
+  
+  if (pArgs) args = env.GetArray(pArgs);
 
   v8::Handle<v8::Value> result = func->Call(thiz, args.size(), args.empty() ? NULL : &args[0]);
 
