@@ -2,7 +2,9 @@ package lu.flier.script;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -146,14 +148,39 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 
 	@Override
 	public <T> T getInterface(Class<T> clasz) {
-		// TODO Auto-generated method stub
-		return null;
+        if (clasz == null || !clasz.isInterface()) {
+            throw new IllegalArgumentException("interface Class expected");
+        }
+        
+		return clasz.cast(Proxy.newProxyInstance(clasz.getClassLoader(), new Class<?>[] { clasz }, new InvocationHandler() {
+
+			@Override
+			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+				
+				return invokeFunction(method.getName(), args);
+			}
+			
+		}));
 	}
 
 	@Override
 	public <T> T getInterface(Object thiz, Class<T> clasz) {
-		// TODO Auto-generated method stub
-		return null;
+        if (thiz == null) {
+            throw new IllegalArgumentException("script object can not be null");
+        }
+        if (clasz == null || !clasz.isInterface()) {
+            throw new IllegalArgumentException("interface Class expected");
+        }
+        
+		return clasz.cast(Proxy.newProxyInstance(clasz.getClassLoader(), new Class<?>[] { clasz }, new InvocationHandler() {
+
+			@Override
+			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+				
+				return invokeMethod(proxy, method.getName(), args);
+			}
+			
+		}));
 	}
 	
 }

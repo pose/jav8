@@ -101,13 +101,24 @@ public class V8ScriptEngineTest
     	assertEquals(5, script.eval());
     }
     
+    public interface IHello {
+    	String hello(String name);
+    }
+    
+    public interface IPerson {
+    	String say(String name);
+    }
+    	
     @Test
     public void testInvoke() throws ScriptException, NoSuchMethodException, IOException 
     {
     	Invocable invocable = (Invocable) this.eng; 
     	
-    	this.eng.eval("function hello(name) { return 'Hello ' + name; }" + 
-    				  "function Person(me) { this.say = function (you) { return me + ' say, hello ' + you; } }" +
+    	this.eng.eval("function hello(name) { return 'Hello ' + name; };" +
+    				  "function Person(me) {" +
+    				  "	 this.say = function (you) {" +
+    				  "    return me + ' say, hello ' + you; }" +
+    				  "}" +
     				  "var me = new Person('Flier');");
     	    	
     	assertEquals("Hello Flier", invocable.invokeFunction("hello", "Flier"));
@@ -116,7 +127,12 @@ public class V8ScriptEngineTest
     		invocable.invokeFunction("nonexist");
     		fail();
     	} catch (NoSuchMethodException e) {    		
-    	}
+    	}    	
+    	
+    	IHello hello = invocable.getInterface(IHello.class);
+    	
+    	assertNotNull(hello);
+    	assertEquals("Hello Flier", hello.hello("Flier"));
     	
     	V8Context ctxt = ((V8ScriptEngine) this.eng).getV8Context();
     	    	
@@ -125,6 +141,11 @@ public class V8ScriptEngineTest
 		assertNotNull(me);
 	
 		assertEquals("Flier say, hello baby", invocable.invokeMethod(me, "say", "baby"));
+		
+		IPerson person = invocable.getInterface(me, IPerson.class);
+		
+		assertNotNull(person);
+		assertEquals("Flier say, hello baby", person.say("baby"));
     }    
     
     @Test
