@@ -27,12 +27,24 @@
 	<condition property="is_unix">
 		<os family="unix" />
 	</condition>		
+	<condition property="is_x64">
+		<equals arg1="${os.arch}" arg2="x64"/>
+	</condition>
 	<condition property="is_debug">
 		<equals arg1="${project.mode}" arg2="debug"/>
 	</condition>
 	
 	<condition property="lib.v8" value="v8_g" else="v8">
 		<istrue value="${is_debug}"/>
+	</condition>
+	<condition property="cc.compiler" value="msvc" else="gcc">
+		<istrue value="${is_win}"/>
+	</condition>
+	<condition property="link.incremental">
+		<istrue value="${is_win}"/>
+	</condition>
+	<condition property="link.static_runtime">
+		<isfalse value="${is_x64}"/>
 	</condition>
 		
 	<property file="${basedir}/build.properties" />
@@ -43,22 +55,17 @@
 		</fileset>
 	</path>
 	
-	<target name="init_win" if="is_win">
-		<property name="cc.compiler" value="msvc"/>
-	</target>
-	
-	<target name="init_unix" if="is_unix">
-		<property name="cc.compiler" value="gcc"/>
-	</target>
-		
 	<target name="clean">
-		<delete file="${dist.dir}/*.jar" />
+		<delete dir="${classes.dir}" />
+		<delete dir="${bin.dir}" />
+		<delete dir="${test.classes.dir}"/>
+		<delete dir="${test.report.dir}"/>
 	</target>
-	<target name="prepare" depends="init_win, init_unix">
+	<target name="prepare">
 		<mkdir dir="${classes.dir}"/>
-		<mkdir dir="${obj.dir}" />
+		<mkdir dir="${bin.dir}" />
 	</target>
-	<target name="compile" depends="clean, prepare">
+	<target name="compile" depends="prepare">
 		<javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false">
 			<include name="**/*.java"/>
 		</javac>
@@ -89,24 +96,25 @@
 		</javah>
 		
 		<echo>Building JNI library ...</echo>
-		<mkdir dir="${bin.dir}"/>
 		<cpptasks:cc name="${cc.compiler}"
 			objdir="${bin.dir}" outfile="${project.name}" 
-			runtime="static" link="static" outtype="shared" 
-			multithreaded="true" optimize="speed" incremental="${is_win}"
+			runtime="${link.static_runtime}" link="static" outtype="shared" 
+			multithreaded="true" optimize="speed" incremental="${link.incremental}"
 			debug="${is_debug}" exceptions="true" rtti="true">			
 			<fileset dir="${jni.dir}" includes="*.cpp"/>			
 
 			<compilerarg value="/GL" if="is_win"/>
 			<compilerarg value="/EHsc" if="is_win"/>
+			<compilerarg value="-fPIC" if="is_x64"/>
 			<linkerarg value="/LTCG" if="is_win"/>
-			<linkerarg value="/INCREMENTAL" if="is_win"/>			
+			<linkerarg value="/INCREMENTAL" if="is_win"/>		
+			<linkerarg value="-fPIC" if="is_x64"/>
 			
 			<includepath>
 				<path>
 					<pathelement path="${env.JAVA_HOME}/include"/>							
 					<pathelement path="${env.JAVA_HOME}/include/win32"/>
-          <pathelement path="${env.JAVA_HOME}/include/linux"/>
+          			<pathelement path="${env.JAVA_HOME}/include/linux"/>
 					<pathelement path="${env.V8_HOME}/include"/>
 				</path>
 			</includepath>
@@ -121,7 +129,7 @@
 		</copy>
 	</target>
 	<target name="jar" depends="jni">
-		<mkdir dir="${dist.dir}"/>		
+		<mkdir dir="${dist.dir}"/>
 		<jar destfile="${jar.file}" basedir="${classes.dir}">
 			<include name="**/*.class"/>
 			<include name="**/*.dll"/>
