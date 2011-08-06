@@ -3,7 +3,7 @@
 	<property environment="env"/>
 	
 	<property name="project.name" value="jav8"/>
-	<property name="project.version" value="0.2"/>
+	<property name="project.version" value="0.3"/>
 	<property name="project.mode" value="release" />
 	
 	<property name="src.dir" value="${basedir}/src" />
@@ -38,7 +38,7 @@
 		<os family="unix" />
 	</condition>		
 	<condition property="is_x64">
-		<equals arg1="${os.arch}" arg2="x64"/>
+		<equals arg1="${os.arch}" arg2="amd64"/>
 	</condition>
 	<condition property="is_debug">
 		<equals arg1="${project.mode}" arg2="debug"/>
