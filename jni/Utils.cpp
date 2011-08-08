@@ -72,6 +72,67 @@ jclass Cache::FindClass(const char *name)
   return clazz;
 }
 
+jfieldID Cache::InternalGetFieldID(jclass clazz, bool statiz, const char * name, const char *sig)
+{
+  fieldIDsByClass_t::key_type clazz_key = std::make_pair(clazz, statiz);
+  fieldIDsByClass_t::iterator clazz_iter = m_fieldIDs.find(clazz_key);
+
+  if (clazz_iter == m_fieldIDs.end())
+  {
+    clazz_iter = m_fieldIDs.insert(std::make_pair(clazz_key, fieldIDs_t())).first;
+  }
+
+  fieldIDs_t& fieldIDs = clazz_iter->second;
+  fieldIDs_t::key_type field_key = std::make_pair(name, sig);
+  fieldIDs_t::iterator field_iter = fieldIDs.find(field_key);
+
+  jfieldID fid = NULL;
+
+  if (field_iter == fieldIDs.end())
+  {
+    fid = statiz ? m_env->GetStaticFieldID(clazz, name, sig) :
+                   m_env->GetFieldID(clazz, name, sig);
+
+    fieldIDs[field_key] = fid;
+  }
+  else
+  {
+    fid = field_iter->second;
+  }
+
+  return fid;
+}
+jmethodID Cache::InternalGetMethodID(jclass clazz, bool statiz, const char * name, const char *sig)
+{
+  methodIDsByClass_t::key_type clazz_key = std::make_pair(clazz, statiz);
+  methodIDsByClass_t::iterator clazz_iter = m_methodIDs.find(clazz_key);
+
+  if (clazz_iter == m_methodIDs.end())
+  {
+    clazz_iter = m_methodIDs.insert(std::make_pair(clazz_key, methodIDs_t())).first;
+  }
+
+  methodIDs_t& methodIDs = clazz_iter->second;
+  methodIDs_t::key_type method_key = std::make_pair(name, sig);
+  methodIDs_t::iterator method_iter = methodIDs.find(method_key);
+
+  jmethodID mid = NULL;
+
+  if (method_iter == methodIDs.end())
+  {
+    mid = statiz ? m_env->GetStaticMethodID(clazz, name, sig) :
+                   m_env->GetMethodID(clazz, name, sig);
+
+    methodIDs[method_key] = mid;
+  }
+  else
+  {
+    mid = method_iter->second;
+  }
+
+  return mid;
+}
+
 const std::string Env::GetString(jstring str)
 {
   jboolean iscopy;
@@ -231,38 +292,34 @@ jobjectArray Env::NewObjectArray(size_t size, const char *name, jobject init)
 
 jobject Env::NewBoolean(jboolean value)
 {
-  jclass clazz = FindClass("java/lang/Boolean");
-  jmethodID cid = GetMethodID(clazz, "<init>", "(Z)V");
-  jobject result = m_env->NewObject(clazz, cid, value);  
+  static jclass clazz = FindClass("java/lang/Boolean");
+  static jmethodID cid = GetMethodID(clazz, "<init>", "(Z)V");
   
-  return result;
+  return m_env->NewObject(clazz, cid, value);  
 }
 
 jobject Env::NewInt(jint value)
 {
-  jclass clazz = FindClass("java/lang/Integer");
-  jmethodID cid = GetMethodID(clazz, "<init>", "(I)V");
-  jobject result = m_env->NewObject(clazz, cid, value);  
-
-  return result;
+  static jclass clazz = FindClass("java/lang/Integer");
+  static jmethodID cid = GetMethodID(clazz, "<init>", "(I)V");
+  
+  return m_env->NewObject(clazz, cid, value);  
 }
 
 jobject Env::NewLong(jlong value)
 {
-  jclass clazz = FindClass("java/lang/Long");
-  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
-  jobject result = m_env->NewObject(clazz, cid, value);
-
-  return result;
+  static jclass clazz = FindClass("java/lang/Long");
+  static jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
+  
+  return m_env->NewObject(clazz, cid, value);
 }
 
 jobject Env::NewDouble(jdouble value)
 {
-  jclass clazz = FindClass("java/lang/Double");
-  jmethodID cid = GetMethodID(clazz, "<init>", "(D)V");
-  jobject result = m_env->NewObject(clazz, cid, value);  
-
-  return result;
+  static jclass clazz = FindClass("java/lang/Double");
+  static jmethodID cid = GetMethodID(clazz, "<init>", "(D)V");
+  
+  return m_env->NewObject(clazz, cid, value);  
 }
 
 jstring Env::NewString(v8::Handle<v8::String> str)
@@ -272,52 +329,47 @@ jstring Env::NewString(v8::Handle<v8::String> str)
 
 jobject Env::NewDate(v8::Handle<v8::Date> date)
 {
-  jclass clazz = FindClass("java/util/Date");
-  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
-  jlong value = floor(date->NumberValue());
-  jobject result = m_env->NewObject(clazz, cid, value);  
+  static jclass clazz = FindClass("java/util/Date");
+  static jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
 
-  return result;
+  jlong value = floor(date->NumberValue());
+  return m_env->NewObject(clazz, cid, value);  
 }
 
 jobject Env::NewV8Object(v8::Handle<v8::Object> obj)
 {
-  jclass clazz = FindClass("lu/flier/script/V8Object");
-  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
-  jlong value = (jlong) *v8::Persistent<v8::Object>::New(obj);
-  jobject result = m_env->NewObject(clazz, cid, value);  
+  static jclass clazz = FindClass("lu/flier/script/V8Object");
+  static jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
 
-  return result;
+  jlong value = (jlong) *v8::Persistent<v8::Object>::New(obj);
+  return m_env->NewObject(clazz, cid, value);  
 }
 
 jobject Env::NewV8Array(v8::Handle<v8::Array> array)
 {
-  jclass clazz = FindClass("lu/flier/script/V8Array");
-  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
-  jlong value = (jlong) *v8::Persistent<v8::Array>::New(array);
-  jobject result = m_env->NewObject(clazz, cid, value);
+  static jclass clazz = FindClass("lu/flier/script/V8Array");
+  static jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
 
-  return result;
+  jlong value = (jlong) *v8::Persistent<v8::Array>::New(array);
+  return m_env->NewObject(clazz, cid, value);
 }
 
 jobject Env::NewV8Function(v8::Handle<v8::Function> func)
 {
-  jclass clazz = FindClass("lu/flier/script/V8Function");
-  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
-  jlong value = (jlong) *v8::Persistent<v8::Function>::New(func);
-  jobject result = m_env->NewObject(clazz, cid, value);  
+  static jclass clazz = FindClass("lu/flier/script/V8Function");
+  static jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
 
-  return result;
+  jlong value = (jlong) *v8::Persistent<v8::Function>::New(func);
+  return m_env->NewObject(clazz, cid, value);  
 }
 
 jobject Env::NewV8Context(v8::Handle<v8::Context> ctxt)
 {
-  jclass clazz = FindClass("lu/flier/script/V8Context");
-  jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
-  jlong value = (jlong) *v8::Persistent<v8::Context>::New(ctxt);
-  jobject result = m_env->NewObject(clazz, cid, value);  
+  static jclass clazz = FindClass("lu/flier/script/V8Context");
+  static jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
 
-  return result;
+  jlong value = (jlong) *v8::Persistent<v8::Context>::New(ctxt);
+  return m_env->NewObject(clazz, cid, value);  
 }
 
 jobject V8Env::Wrap(v8::Handle<v8::Value> value)
@@ -400,23 +452,27 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
            m_env->IsAssignableFrom(clazz, FindClass("java/lang/Short")) == JNI_TRUE ||
            m_env->IsAssignableFrom(clazz, FindClass("java/lang/Byte")) == JNI_TRUE) 
   {
-    jmethodID mid = GetMethodID(clazz, "intValue", "()I");
+    static jmethodID mid = GetMethodID("java/lang/Number", "intValue", "()I");
+
     result = v8::Integer::New(m_env->CallIntMethod(value, mid));
   }
   else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/Double")) == JNI_TRUE ||
            m_env->IsAssignableFrom(clazz, FindClass("java/lang/Float")) == JNI_TRUE) 
   {
-    jmethodID mid = GetMethodID(clazz, "doubleValue", "()D");
+    static jmethodID mid = GetMethodID("java/lang/Number", "doubleValue", "()D");
+
     result = v8::Number::New(m_env->CallDoubleMethod(value, mid));
   }
   else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/Boolean")) == JNI_TRUE) 
   {
-    jmethodID mid = GetMethodID(clazz, "booleanValue", "()Z");
+    static jmethodID mid = GetMethodID("java/lang/Boolean", "booleanValue", "()Z");
+
     result = v8::Boolean::New(m_env->CallBooleanMethod(value, mid));
   }      
   else if (m_env->IsAssignableFrom(clazz, FindClass("java/util/Date")) == JNI_TRUE)
   {
-    jmethodID mid = GetMethodID("java/util/Date", "getTime", "()J");
+    static jmethodID mid = GetMethodID("java/util/Date", "getTime", "()J");
+
     result = v8::Date::New(m_env->CallLongMethod(value, mid));
   }
   else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/reflect/Method")) == JNI_TRUE) 

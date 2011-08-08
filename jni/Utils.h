@@ -16,12 +16,20 @@ class Cache
 
   typedef std::map<std::string, jclass> classes_t;
 
-  typedef std::map<std::string, jobject> objects_t;
-  typedef std::map<jclass, objects_t> fields_t;
+  typedef std::map<std::pair<std::string, std::string>, jfieldID> fieldIDs_t;
+  typedef std::map<std::pair<jclass, bool>, fieldIDs_t> fieldIDsByClass_t;
+
+  typedef std::map<std::pair<std::string, std::string>, jmethodID> methodIDs_t;
+  typedef std::map<std::pair<jclass, bool>, methodIDs_t> methodIDsByClass_t;
 
   JNIEnv *m_env;
+
   classes_t m_classes;
-  fields_t m_fields;
+  fieldIDsByClass_t m_fieldIDs;
+  methodIDsByClass_t m_methodIDs;
+
+  jfieldID InternalGetFieldID(jclass clazz, bool statiz, const char * name, const char *sig);
+  jmethodID InternalGetMethodID(jclass clazz, bool statiz, const char * name, const char *sig);
 public:
   Cache(JNIEnv *env) : m_env(env) {}
   virtual ~Cache(void) { Clear(); }
@@ -31,6 +39,23 @@ public:
   void Clear(void);
 
   jclass FindClass(const char *name);
+
+  jfieldID GetFieldID(jclass clazz, const char * name, const char *sig)
+  {
+    return InternalGetFieldID(clazz, false, name, sig);
+  }
+  jfieldID GetStaticFieldID(jclass clazz, const char * name, const char *sig)
+  {
+    return InternalGetFieldID(clazz, true, name, sig);
+  }
+  jmethodID GetMethodID(jclass clazz, const char * name, const char *sig)
+  {
+    return InternalGetMethodID(clazz, false, name, sig);
+  }
+  jmethodID GetStaticMethodID(jclass clazz, const char * name, const char *sig)
+  {
+    return InternalGetMethodID(clazz, true, name, sig);
+  }
 };
 
 class Env
@@ -53,29 +78,29 @@ public:
   }
 
   jfieldID GetFieldID(jclass clazz, const char * name, const char *sig) {
-    // TODO cache it with TLS
-    return m_env->GetFieldID(clazz, name, sig);
+    return Cache::GetInstance(m_env).GetFieldID(clazz, name, sig);
+  }
+  jfieldID GetFieldID(const char * clazz, const char * name, const char *sig) {
+    return Cache::GetInstance(m_env).GetFieldID(FindClass(clazz), name, sig);
   }
 
   jfieldID GetStaticFieldID(jclass clazz, const char * name, const char *sig) {
-    // TODO cache it with TLS
-    return m_env->GetStaticFieldID(clazz, name, sig);
+    return Cache::GetInstance(m_env).GetStaticFieldID(clazz, name, sig);
+  }
+  jfieldID GetStaticFieldID(const char * clazz, const char * name, const char *sig) {
+    return Cache::GetInstance(m_env).GetStaticFieldID(FindClass(clazz), name, sig);
   }
 
-  jmethodID GetMethodID(jclass clazz, const char * name, const char *sig) {
-    // TODO cache it with TLS
-    return m_env->GetMethodID(clazz, name, sig);
+  jmethodID GetMethodID(jclass clazz, const char * name, const char *sig) {    
+    return Cache::GetInstance(m_env).GetMethodID(clazz, name, sig);
   }
-
   jmethodID GetMethodID(const char * clazz, const char * name, const char *sig) {
     return GetMethodID(FindClass(clazz), name, sig);
   }
 
-  jmethodID GetStaticMethodID(jclass clazz, const char * name, const char *sig) {
-    // TODO cache it with TLS
-    return m_env->GetStaticMethodID(clazz, name, sig);
+  jmethodID GetStaticMethodID(jclass clazz, const char * name, const char *sig) {    
+    return Cache::GetInstance(m_env).GetStaticMethodID(clazz, name, sig);
   }
-
   jmethodID GetStaticMethodID(const char * clazz, const char * name, const char *sig) {
     return GetStaticMethodID(FindClass(clazz), name, sig);
   }

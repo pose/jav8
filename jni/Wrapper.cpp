@@ -25,38 +25,31 @@ void CJavaObject::CacheNames(void)
 {
   jni::Env env(m_pEnv);
 
-  jmethodID mid = env.GetMethodID("java/lang/Class", "getFields", "()[Ljava/lang/reflect/Field;");
-  jobjectArray fields = (jobjectArray) m_pEnv->CallObjectMethod(env->GetObjectClass(m_obj), mid);
+  static jmethodID midGetFields = env.GetMethodID("java/lang/Class", "getFields", "()[Ljava/lang/reflect/Field;");
+  jobjectArray fields = (jobjectArray) m_pEnv->CallObjectMethod(env->GetObjectClass(m_obj), midGetFields);
   
-  mid = NULL;
+  static jmethodID midGetFieldName = env.GetMethodID("java/lang/reflect/Field", "getName", "()Ljava/lang/String;");
   for (size_t i=0; i<env->GetArrayLength(fields); i++)
   {
     jobject field = env->GetObjectArrayElement(fields, i);
 
-    if (!mid) {
-      mid = env.GetMethodID("java/lang/reflect/Field", "getName", "()Ljava/lang/String;");
-    }
-    
-    std::string name = env.GetString((jstring) env->CallObjectMethod(field, mid));
+    std::string name = env.GetString((jstring) env->CallObjectMethod(field, midGetFieldName));
     
     m_fields[name] = env->NewGlobalRef(field);
 
     env->DeleteLocalRef(field);
   }
 
-  mid = env.GetMethodID("java/lang/Class", "getMethods", "()[Ljava/lang/reflect/Method;");
-  jobjectArray methods = (jobjectArray) m_pEnv->CallObjectMethod(env->GetObjectClass(m_obj), mid);
+  static jmethodID midGetMethods = env.GetMethodID("java/lang/Class", "getMethods", "()[Ljava/lang/reflect/Method;");
+  jobjectArray methods = (jobjectArray) m_pEnv->CallObjectMethod(env->GetObjectClass(m_obj), midGetMethods);
 
-  jclass clazz = env.FindClass("java/lang/reflect/Method");
-  mid = NULL;
-
+  static jmethodID midGetMethodName = env.GetMethodID("java/lang/reflect/Method", "getName", "()Ljava/lang/String;");
+  
   for (size_t i=0; i<env->GetArrayLength(methods); i++)
   {
     jobject method = env->GetObjectArrayElement(methods, i);
-
-    mid = env.GetMethodID(clazz, "getName", "()Ljava/lang/String;");
     
-    std::string name = env.GetString((jstring) env->CallObjectMethod(method, mid));
+    std::string name = env.GetString((jstring) env->CallObjectMethod(method, midGetMethodName));
 
     const types_t& types = CJavaFunction::GetParameterTypes(env, method);
 
@@ -79,7 +72,8 @@ v8::Handle<v8::Value> CJavaObject::NamedGetter(
     fields_t::const_iterator it = obj.m_fields.find(*name);
 
     if (it != obj.m_fields.end()) {
-      jmethodID mid = env.GetMethodID(env->GetObjectClass(it->second), "get", "(Ljava/lang/Object;)Ljava/lang/Object;");      
+      static jmethodID mid = env.GetMethodID("java/lang/reflect/Field", "get", "(Ljava/lang/Object;)Ljava/lang/Object;");    
+
       return env.Close(env.Wrap(env->CallObjectMethod(it->second, mid, obj.m_obj)));
     }
   }
@@ -107,7 +101,7 @@ v8::Handle<v8::Value> CJavaObject::NamedSetter(
     fields_t::const_iterator it = obj.m_fields.find(*name);
 
     if (it != obj.m_fields.end()) {
-      jmethodID mid = env.GetMethodID(env->GetObjectClass(it->second), "set", "(Ljava/lang/Object;Ljava/lang/Object;)V");     
+      static jmethodID mid = env.GetMethodID("java/lang/reflect/Field", "set", "(Ljava/lang/Object;Ljava/lang/Object;)V");     
 
       env->CallVoidMethod(it->second, mid, obj.m_obj, env.Wrap(value));
 
@@ -205,8 +199,8 @@ v8::Handle<v8::Value> CJavaArray::IndexedGetter(
 
   jni::V8Env env(obj.m_pEnv);
 
-  jclass clazz = env.FindClass("java/lang/reflect/Array");
-  jmethodID mid = env.GetStaticMethodID(clazz, "get", "(Ljava/lang/Object;I)Ljava/lang/Object;");
+  static jclass clazz = env.FindClass("java/lang/reflect/Array");
+  static jmethodID mid = env.GetStaticMethodID("java/lang/reflect/Array", "get", "(Ljava/lang/Object;I)Ljava/lang/Object;");
 
   return env.Close(env.Wrap(env->CallStaticObjectMethod(clazz, mid, obj.m_obj, index)));
 }
@@ -217,8 +211,8 @@ v8::Handle<v8::Value> CJavaArray::IndexedSetter(
 
   jni::V8Env env(obj.m_pEnv);
 
-  jclass clazz = env.FindClass("java/lang/reflect/Array");
-  jmethodID mid = env.GetStaticMethodID(clazz, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V");
+  static jclass clazz = env.FindClass("java/lang/reflect/Array");
+  static jmethodID mid = env.GetStaticMethodID(clazz, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V");
 
   env->CallStaticVoidMethod(clazz, mid, obj.m_obj, index, env.Wrap(value));
 
@@ -276,7 +270,7 @@ const CJavaFunction::types_t CJavaFunction::GetParameterTypes(JNIEnv *pEnv, jobj
 {
   jni::Env env(pEnv);
 
-  jmethodID mid = env.GetMethodID("java/lang/reflect/Method", "getParameterTypes", "()[Ljava/lang/Class;");
+  static jmethodID mid = env.GetMethodID("java/lang/reflect/Method", "getParameterTypes", "()[Ljava/lang/Class;");
 
   jobjectArray classes = (jobjectArray) env->CallObjectMethod(method, mid);
 
@@ -388,7 +382,7 @@ v8::Handle<v8::Value> CJavaFunction::Caller(const v8::Arguments& args)
   }
   
   jobject method = func.GetMethod(args);
-  jmethodID mid = env.GetMethodID(env->GetObjectClass(method), "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
+  static jmethodID mid = env.GetMethodID("java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
   
   jobject result = env->CallObjectMethod(method, mid, thiz, params);
 
