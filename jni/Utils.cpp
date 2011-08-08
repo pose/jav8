@@ -14,7 +14,63 @@
 #  define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 #endif
 
+#ifdef _MSC_VER
+#  define thread_t __declspec( thread )  // http://msdn.microsoft.com/en-us/library/6yh4a9k1.aspx
+#else
+#  define thread_t __thread // http://gcc.gnu.org/onlinedocs/gcc-3.3.1/gcc/Thread-Local.html
+#endif
+
 namespace jni {
+
+Cache& Cache::GetInstance(JNIEnv *env)
+{
+  thread_t static caches_t *s_caches = NULL;
+  
+  if (!s_caches) s_caches = new caches_t();
+
+  caches_t::const_iterator it = s_caches->find(env);
+
+  if (it != s_caches->end()) return *it->second.get();
+
+  std::auto_ptr<Cache> cache(new Cache(env));
+
+  s_caches->insert(std::make_pair(env, cache.get()));
+  
+  return *cache.release();
+}
+
+void Cache::Clear(void)
+{
+  for (classes_t::const_iterator it=m_classes.begin(); it!=m_classes.end(); it++)
+  {
+    m_env->DeleteGlobalRef(it->second);
+  }
+}
+
+jclass Cache::FindClass(const char *name)
+{
+  classes_t::const_iterator it = m_classes.find(name);
+
+  jclass clazz;
+
+  if (it != m_classes.end()) 
+  {
+    clazz = it->second;
+  }
+  else
+  {
+    clazz = m_env->FindClass(name);
+
+    if (clazz) 
+    {
+      clazz = (jclass) m_env->NewGlobalRef(clazz);
+
+      m_classes[name] = clazz;
+    }
+  }
+
+  return clazz;
+}
 
 const std::string Env::GetString(jstring str)
 {
@@ -177,8 +233,7 @@ jobject Env::NewBoolean(jboolean value)
 {
   jclass clazz = FindClass("java/lang/Boolean");
   jmethodID cid = GetMethodID(clazz, "<init>", "(Z)V");
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
+  jobject result = m_env->NewObject(clazz, cid, value);  
   
   return result;
 }
@@ -187,8 +242,7 @@ jobject Env::NewInt(jint value)
 {
   jclass clazz = FindClass("java/lang/Integer");
   jmethodID cid = GetMethodID(clazz, "<init>", "(I)V");
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
+  jobject result = m_env->NewObject(clazz, cid, value);  
 
   return result;
 }
@@ -198,7 +252,6 @@ jobject Env::NewLong(jlong value)
   jclass clazz = FindClass("java/lang/Long");
   jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
   jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
 
   return result;
 }
@@ -207,8 +260,7 @@ jobject Env::NewDouble(jdouble value)
 {
   jclass clazz = FindClass("java/lang/Double");
   jmethodID cid = GetMethodID(clazz, "<init>", "(D)V");
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
+  jobject result = m_env->NewObject(clazz, cid, value);  
 
   return result;
 }
@@ -223,8 +275,7 @@ jobject Env::NewDate(v8::Handle<v8::Date> date)
   jclass clazz = FindClass("java/util/Date");
   jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
   jlong value = floor(date->NumberValue());
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
+  jobject result = m_env->NewObject(clazz, cid, value);  
 
   return result;
 }
@@ -234,8 +285,7 @@ jobject Env::NewV8Object(v8::Handle<v8::Object> obj)
   jclass clazz = FindClass("lu/flier/script/V8Object");
   jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
   jlong value = (jlong) *v8::Persistent<v8::Object>::New(obj);
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
+  jobject result = m_env->NewObject(clazz, cid, value);  
 
   return result;
 }
@@ -246,7 +296,6 @@ jobject Env::NewV8Array(v8::Handle<v8::Array> array)
   jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
   jlong value = (jlong) *v8::Persistent<v8::Array>::New(array);
   jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
 
   return result;
 }
@@ -256,8 +305,7 @@ jobject Env::NewV8Function(v8::Handle<v8::Function> func)
   jclass clazz = FindClass("lu/flier/script/V8Function");
   jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
   jlong value = (jlong) *v8::Persistent<v8::Function>::New(func);
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
+  jobject result = m_env->NewObject(clazz, cid, value);  
 
   return result;
 }
@@ -267,8 +315,7 @@ jobject Env::NewV8Context(v8::Handle<v8::Context> ctxt)
   jclass clazz = FindClass("lu/flier/script/V8Context");
   jmethodID cid = GetMethodID(clazz, "<init>", "(J)V");
   jlong value = (jlong) *v8::Persistent<v8::Context>::New(ctxt);
-  jobject result = m_env->NewObject(clazz, cid, value);
-  m_env->DeleteLocalRef(clazz);
+  jobject result = m_env->NewObject(clazz, cid, value);  
 
   return result;
 }

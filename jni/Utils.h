@@ -2,12 +2,36 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include <jni.h>
 
 #include <v8.h>
 
 namespace jni {
+
+class Cache
+{
+  typedef std::map<JNIEnv *, std::auto_ptr<Cache> > caches_t;
+
+  typedef std::map<std::string, jclass> classes_t;
+
+  typedef std::map<std::string, jobject> objects_t;
+  typedef std::map<jclass, objects_t> fields_t;
+
+  JNIEnv *m_env;
+  classes_t m_classes;
+  fields_t m_fields;
+public:
+  Cache(JNIEnv *env) : m_env(env) {}
+  virtual ~Cache(void) { Clear(); }
+
+  static Cache& GetInstance(JNIEnv *env);
+
+  void Clear(void);
+
+  jclass FindClass(const char *name);
+};
 
 class Env
 {
@@ -24,9 +48,8 @@ public:
 
   const std::string GetString(jstring str);
 
-  jclass FindClass(const char *name) { 
-    // TODO cache it with TLS
-    return m_env->FindClass(name); 
+  jclass FindClass(const char *name) {     
+    return Cache::GetInstance(m_env).FindClass(name); 
   }
 
   jfieldID GetFieldID(jclass clazz, const char * name, const char *sig) {
