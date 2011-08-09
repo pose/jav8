@@ -16,17 +16,30 @@ class Cache
 
   typedef std::map<std::string, jclass> classes_t;
 
+  typedef std::map<std::pair<jclass, jclass>, bool> assignables_t;
+
   typedef std::map<std::pair<std::string, std::string>, jfieldID> fieldIDs_t;
   typedef std::map<std::pair<jclass, bool>, fieldIDs_t> fieldIDsByClass_t;
 
   typedef std::map<std::pair<std::string, std::string>, jmethodID> methodIDs_t;
   typedef std::map<std::pair<jclass, bool>, methodIDs_t> methodIDsByClass_t;
 
+  typedef std::vector<jclass> types_t;
+  typedef std::pair<jobject, types_t> method_t;
+
+  typedef std::map<std::string, jobject> fields_t;
+  typedef std::map<std::string, std::vector<method_t> > methods_t;
+  typedef std::map<jclass, std::pair<fields_t, methods_t> > members_t;
+
   JNIEnv *m_env;
 
   classes_t m_classes;
+  assignables_t m_assignables;
   fieldIDsByClass_t m_fieldIDs;
   methodIDsByClass_t m_methodIDs;
+  members_t m_members;
+
+  members_t::iterator CacheMembers(jclass clazz);
 
   jfieldID InternalGetFieldID(jclass clazz, bool statiz, const char * name, const char *sig);
   jmethodID InternalGetMethodID(jclass clazz, bool statiz, const char * name, const char *sig);
@@ -39,6 +52,8 @@ public:
   void Clear(void);
 
   jclass FindClass(const char *name);
+
+  bool IsAssignableFrom(jclass sub, jclass sup);
 
   jfieldID GetFieldID(jclass clazz, const char * name, const char *sig)
   {
@@ -55,7 +70,12 @@ public:
   jmethodID GetStaticMethodID(jclass clazz, const char * name, const char *sig)
   {
     return InternalGetMethodID(clazz, true, name, sig);
-  }
+  }  
+
+  v8::Handle<v8::Value> GetMember(jobject obj, const std::string& name);
+  v8::Handle<v8::Value> SetMember(jobject obj, const std::string& name, v8::Handle<v8::Value> value);
+  bool HasMember(jobject obj, const std::string& name);
+  v8::Handle<v8::Array> GetMembers(jobject obj);
 };
 
 class Env
@@ -110,10 +130,27 @@ public:
   jobject GetStaticField(jobject obj, const char *name, const char *sig);
 
   bool IsAssignableFrom(jclass sub, const char *sup) {
-    return m_env->IsAssignableFrom(sub, FindClass(sup)) == JNI_TRUE;
+    return Cache::GetInstance(m_env).IsAssignableFrom(sub, FindClass(sup)) == JNI_TRUE;
   }
   bool IsAssignableFrom(const char * sub, jclass sup) {
-    return m_env->IsAssignableFrom(FindClass(sub), sup) == JNI_TRUE;
+    return Cache::GetInstance(m_env).IsAssignableFrom(FindClass(sub), sup) == JNI_TRUE;
+  }
+
+  v8::Handle<v8::Value> GetMember(jobject obj, const std::string& name)
+  {
+    return Cache::GetInstance(m_env).GetMember(obj, name);
+  }
+  v8::Handle<v8::Value> SetMember(jobject obj, const std::string& name, v8::Handle<v8::Value> value)
+  {
+    return Cache::GetInstance(m_env).SetMember(obj, name, value);
+  }
+  bool HasMember(jobject obj, const std::string& name)
+  {
+    return Cache::GetInstance(m_env).HasMember(obj, name);
+  }
+  v8::Handle<v8::Array> GetMembers(jobject obj)
+  {
+    return Cache::GetInstance(m_env).GetMembers(obj);
   }
 
   jobject NewObject(const char *name, const char *sig = "()V", ...);

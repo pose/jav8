@@ -137,23 +137,9 @@ public:
 
 class CJavaObject : public CBaseJavaObject<CJavaObject> {
   typedef CBaseJavaObject<CJavaObject> __base__;
-
-  typedef std::vector<jclass> types_t;
-  typedef std::pair<jobject, types_t> method_t;
-
-  typedef std::map<std::string, jobject> fields_t;
-  typedef std::map<std::string, std::vector<method_t> > methods_t;
-
-  fields_t m_fields;
-  methods_t m_methods;
-
-  void CacheNames(void);
 public:
-  CJavaObject(JNIEnv *pEnv, jobject obj) : __base__(pEnv, obj) {
-    CacheNames();
+  CJavaObject(JNIEnv *pEnv, jobject obj) : __base__(pEnv, obj) {    
   }
-
-  virtual ~CJavaObject(void);
   
   static v8::Handle<v8::Value> NamedGetter(
     v8::Local<v8::String> prop, const v8::AccessorInfo& info);

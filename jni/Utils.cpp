@@ -45,6 +45,36 @@ void Cache::Clear(void)
   {
     m_env->DeleteGlobalRef(it->second);
   }
+
+  m_classes.clear();
+
+  for (assignables_t::const_iterator it=m_assignables.begin(); it!=m_assignables.end(); it++)
+  {
+    m_env->DeleteGlobalRef(it->first.first);
+    m_env->DeleteGlobalRef(it->first.second);
+  }
+
+  m_assignables.clear();
+
+  for (members_t::const_iterator it=m_members.begin(); it!=m_members.end(); it++)
+  {
+    m_env->DeleteGlobalRef(it->first);
+
+    const fields_t& fields = it->second.first;
+    const methods_t& methods = it->second.second;
+
+    for (fields_t::const_iterator itField = fields.begin(); itField != fields.end(); itField++)
+    {
+      m_env->DeleteGlobalRef(itField->second);
+    }
+    
+    for (methods_t::const_iterator itMethod = methods.begin(); itMethod != methods.end(); itMethod++)
+    {
+      CJavaFunction::ReleaseMethods(m_env, itMethod->second);
+    }
+  }
+
+  m_members.clear();
 }
 
 jclass Cache::FindClass(const char *name)
@@ -70,6 +100,22 @@ jclass Cache::FindClass(const char *name)
   }
 
   return clazz;
+}
+
+bool Cache::IsAssignableFrom(jclass sub, jclass sup)
+{
+  assignables_t::const_iterator iter = m_assignables.find(std::make_pair(sub, sup));
+
+  if (iter != m_assignables.end()) return iter->second;
+  
+  assignables_t::key_type key = std::make_pair((jclass) m_env->NewGlobalRef(sub), 
+                                               (jclass) m_env->NewGlobalRef(sup));
+
+  bool assignable = m_env->IsAssignableFrom(sub, sup) == JNI_TRUE;
+
+  m_assignables[key] = assignable;
+
+  return assignable;
 }
 
 jfieldID Cache::InternalGetFieldID(jclass clazz, bool statiz, const char * name, const char *sig)
@@ -131,6 +177,167 @@ jmethodID Cache::InternalGetMethodID(jclass clazz, bool statiz, const char * nam
   }
 
   return mid;
+}
+
+Cache::members_t::iterator Cache::CacheMembers(jclass clazz)
+{
+  members_t::iterator iter = m_members.find(clazz);
+
+  if (iter == m_members.end())
+  {
+    iter = m_members.insert(std::make_pair((jclass) m_env->NewGlobalRef(clazz), std::make_pair(fields_t(), methods_t()))).first;
+
+    V8Env env(m_env);
+
+    static jmethodID midGetFields = env.GetMethodID("java/lang/Class", "getFields", "()[Ljava/lang/reflect/Field;");
+    jobjectArray fields = (jobjectArray) env->CallObjectMethod(clazz, midGetFields);
+
+    static jmethodID midGetFieldName = env.GetMethodID("java/lang/reflect/Field", "getName", "()Ljava/lang/String;");
+    for (size_t i=0; i<env->GetArrayLength(fields); i++)
+    {
+      jobject field = env->GetObjectArrayElement(fields, i);
+
+      std::string name = env.GetString((jstring) env->CallObjectMethod(field, midGetFieldName));
+
+      iter->second.first[name] = env->NewGlobalRef(field);
+
+      env->DeleteLocalRef(field);
+    }
+
+    static jmethodID midGetMethods = env.GetMethodID("java/lang/Class", "getMethods", "()[Ljava/lang/reflect/Method;");
+    jobjectArray methods = (jobjectArray) env->CallObjectMethod(clazz, midGetMethods);
+
+    static jmethodID midGetMethodName = env.GetMethodID("java/lang/reflect/Method", "getName", "()Ljava/lang/String;");
+
+    for (size_t i=0; i<env->GetArrayLength(methods); i++)
+    {
+      jobject method = env->GetObjectArrayElement(methods, i);
+
+      std::string name = env.GetString((jstring) env->CallObjectMethod(method, midGetMethodName));
+
+      const types_t& types = CJavaFunction::GetParameterTypes(env, method);
+
+      iter->second.second[name].push_back(std::make_pair(env->NewGlobalRef(method), types));
+
+      env->DeleteLocalRef(method);
+    }
+  }
+
+  return iter;
+}
+
+v8::Handle<v8::Value> Cache::GetMember(jobject obj, const std::string& name)
+{
+  jni::V8Env env(m_env);
+
+  members_t::iterator iter = CacheMembers(env->GetObjectClass(obj));
+
+  if (iter != m_members.end())
+  {
+    fields_t& fields = iter->second.first;
+    {
+      fields_t::const_iterator it = fields.find(name);
+
+      if (it != fields.end()) {
+        static jmethodID mid = env.GetMethodID("java/lang/reflect/Field", "get", "(Ljava/lang/Object;)Ljava/lang/Object;");    
+
+        return env.Close(env.Wrap(env->CallObjectMethod(it->second, mid, obj)));
+      }
+    }
+
+    methods_t& methods = iter->second.second;
+    {
+      methods_t::const_iterator it = methods.find(name);
+
+      if (it != methods.end()) {
+        return env.Close(CJavaFunction::Wrap(m_env, it->second));
+      }
+    }
+  }
+
+  return v8::Handle<v8::Value>();
+}
+v8::Handle<v8::Value> Cache::SetMember(jobject obj, const std::string& name, v8::Handle<v8::Value> value)
+{
+  jni::V8Env env(m_env);
+
+  members_t::iterator iter = CacheMembers(env->GetObjectClass(obj));
+
+  if (iter != m_members.end())
+  {
+    fields_t& fields = iter->second.first;
+    {
+      fields_t::const_iterator it = fields.find(name);
+
+      if (it != fields.end()) {
+        static jmethodID mid = env.GetMethodID("java/lang/reflect/Field", "set", "(Ljava/lang/Object;Ljava/lang/Object;)V");     
+
+        env->CallVoidMethod(it->second, mid, obj, env.Wrap(value));
+
+        return value;
+      }
+    }
+  }
+
+  return v8::Handle<v8::Value>();
+}
+bool Cache::HasMember(jobject obj, const std::string& name)
+{
+  jni::V8Env env(m_env);
+
+  members_t::iterator iter = CacheMembers(env->GetObjectClass(obj));
+
+  if (iter != m_members.end())
+  {
+    fields_t& fields = iter->second.first;
+    {
+      fields_t::const_iterator it = fields.find(name);
+
+      if (it != fields.end()) {
+        return true;
+      }
+    }
+
+    methods_t& methods = iter->second.second;
+    {
+      methods_t::const_iterator it = methods.find(name);
+
+      if (it != methods.end()) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+v8::Handle<v8::Array> Cache::GetMembers(jobject obj)
+{
+  jni::V8Env env(m_env);
+
+  members_t::iterator iter = CacheMembers(env->GetObjectClass(obj));
+
+  if (iter != m_members.end())
+  {
+    fields_t& fields = iter->second.first;
+    methods_t& methods = iter->second.second;
+
+    v8::Handle<v8::Array> result = v8::Array::New(fields.size() + methods.size());
+    uint32_t idx = 0;
+
+    for (fields_t::const_iterator it = fields.begin(); it != fields.end(); it++)
+    {
+      result->Set(idx++, v8::String::New(it->first.c_str(), it->first.size()));
+    }
+
+    for (methods_t::const_iterator it = methods.begin(); it != methods.end(); it++)
+    {
+      result->Set(idx++, v8::String::New(it->first.c_str(), it->first.size()));
+    }
+
+    return result;
+  }
+
+  return v8::Handle<v8::Array>();
 }
 
 const std::string Env::GetString(jstring str)

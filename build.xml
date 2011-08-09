@@ -138,7 +138,6 @@
 			<compilerarg value="/EHsc" if="is_win"/>
 			<compilerarg value="-fPIC" if="is_x64"/>
 			
-			<linkerarg value="/LTCG" if="is_win"/>
 			<linkerarg value="/INCREMENTAL" if="is_win"/>		
 			<linkerarg value="-fPIC" if="is_x64"/>
 			

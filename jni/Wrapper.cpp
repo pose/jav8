@@ -5,60 +5,7 @@
 #include "Utils.h"
 
 namespace jni {
-
-CJavaObject::~CJavaObject(void)
-{
-  for (fields_t::const_iterator it = m_fields.begin(); it != m_fields.end(); it++)
-  {
-    m_pEnv->DeleteGlobalRef(it->second);
-  }
-
-  m_fields.clear();
-
-  for (methods_t::const_iterator it = m_methods.begin(); it != m_methods.end(); it++)
-  {
-    CJavaFunction::ReleaseMethods(m_pEnv, it->second);
-  }
-}
-
-void CJavaObject::CacheNames(void) 
-{
-  jni::Env env(m_pEnv);
-
-  static jmethodID midGetFields = env.GetMethodID("java/lang/Class", "getFields", "()[Ljava/lang/reflect/Field;");
-  jobjectArray fields = (jobjectArray) m_pEnv->CallObjectMethod(env->GetObjectClass(m_obj), midGetFields);
   
-  static jmethodID midGetFieldName = env.GetMethodID("java/lang/reflect/Field", "getName", "()Ljava/lang/String;");
-  for (size_t i=0; i<env->GetArrayLength(fields); i++)
-  {
-    jobject field = env->GetObjectArrayElement(fields, i);
-
-    std::string name = env.GetString((jstring) env->CallObjectMethod(field, midGetFieldName));
-    
-    m_fields[name] = env->NewGlobalRef(field);
-
-    env->DeleteLocalRef(field);
-  }
-
-  static jmethodID midGetMethods = env.GetMethodID("java/lang/Class", "getMethods", "()[Ljava/lang/reflect/Method;");
-  jobjectArray methods = (jobjectArray) m_pEnv->CallObjectMethod(env->GetObjectClass(m_obj), midGetMethods);
-
-  static jmethodID midGetMethodName = env.GetMethodID("java/lang/reflect/Method", "getName", "()Ljava/lang/String;");
-  
-  for (size_t i=0; i<env->GetArrayLength(methods); i++)
-  {
-    jobject method = env->GetObjectArrayElement(methods, i);
-    
-    std::string name = env.GetString((jstring) env->CallObjectMethod(method, midGetMethodName));
-
-    const types_t& types = CJavaFunction::GetParameterTypes(env, method);
-
-    m_methods[name].push_back(std::make_pair(env->NewGlobalRef(method), types));
-
-    env->DeleteLocalRef(method);
-  }
-}
-
 v8::Handle<v8::Value> CJavaObject::NamedGetter(
   v8::Local<v8::String> prop, const v8::AccessorInfo& info)
 {
@@ -68,25 +15,7 @@ v8::Handle<v8::Value> CJavaObject::NamedGetter(
 
   v8::String::Utf8Value name(prop);
 
-  {
-    fields_t::const_iterator it = obj.m_fields.find(*name);
-
-    if (it != obj.m_fields.end()) {
-      static jmethodID mid = env.GetMethodID("java/lang/reflect/Field", "get", "(Ljava/lang/Object;)Ljava/lang/Object;");    
-
-      return env.Close(env.Wrap(env->CallObjectMethod(it->second, mid, obj.m_obj)));
-    }
-  }
-
-  {
-    methods_t::const_iterator it = obj.m_methods.find(*name);
-
-    if (it != obj.m_methods.end()) {
-      return env.Close(CJavaFunction::Wrap(obj.m_pEnv, it->second));
-    }
-  }
-
-  return __base__::NamedGetter(prop, info);
+  return env.GetMember(obj.m_obj, *name);
 }
 v8::Handle<v8::Value> CJavaObject::NamedSetter(
   v8::Local<v8::String> prop, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
@@ -97,19 +26,7 @@ v8::Handle<v8::Value> CJavaObject::NamedSetter(
 
   v8::String::Utf8Value name(prop);
 
-  {
-    fields_t::const_iterator it = obj.m_fields.find(*name);
-
-    if (it != obj.m_fields.end()) {
-      static jmethodID mid = env.GetMethodID("java/lang/reflect/Field", "set", "(Ljava/lang/Object;Ljava/lang/Object;)V");     
-
-      env->CallVoidMethod(it->second, mid, obj.m_obj, env.Wrap(value));
-
-      return value;
-    }
-  }
-
-  return __base__::NamedSetter(prop, value, info);
+  return env.SetMember(obj.m_obj, *name, value);
 }
 v8::Handle<v8::Integer> CJavaObject::NamedQuery(
   v8::Local<v8::String> prop, const v8::AccessorInfo& info)
@@ -120,23 +37,8 @@ v8::Handle<v8::Integer> CJavaObject::NamedQuery(
 
   v8::String::Utf8Value name(prop);
 
-  {
-    fields_t::const_iterator it = obj.m_fields.find(*name);
-
-    if (it != obj.m_fields.end()) {
-      return env.Close(v8::Integer::New(v8::None));
-    }
-  }
-
-  {
-    methods_t::const_iterator it = obj.m_methods.find(*name);
-
-    if (it != obj.m_methods.end()) {
-      return env.Close(v8::Integer::New(v8::None));
-    }
-  }
-
-  return __base__::NamedQuery(prop, info);
+  return env.HasMember(obj.m_obj, *name) ? env.Close(v8::Integer::New(v8::None)) : 
+                                           v8::Handle<v8::Integer>();
 }
 v8::Handle<v8::Array> CJavaObject::NamedEnumerator(const v8::AccessorInfo& info)
 {
@@ -144,22 +46,8 @@ v8::Handle<v8::Array> CJavaObject::NamedEnumerator(const v8::AccessorInfo& info)
 
   jni::V8Env env(obj.m_pEnv);
 
-  v8::Handle<v8::Array> result = v8::Array::New(obj.m_fields.size() + obj.m_methods.size());
-  uint32_t idx = 0;
-  
-  for (fields_t::const_iterator it = obj.m_fields.begin(); it != obj.m_fields.end(); it++)
-  {
-    result->Set(idx++, v8::String::New(it->first.c_str(), it->first.size()));
-  }
-  
-  for (methods_t::const_iterator it = obj.m_methods.begin(); it != obj.m_methods.end(); it++)
-  {
-    result->Set(idx++, v8::String::New(it->first.c_str(), it->first.size()));
-  }
-
-  return env.Close(result);
+  return env.GetMembers(obj.m_obj);
 }
-
 
 v8::Handle<v8::Value> CJavaArray::NamedGetter(
   v8::Local<v8::String> prop, const v8::AccessorInfo& info)
