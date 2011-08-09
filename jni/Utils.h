@@ -8,6 +8,8 @@
 
 #include <v8.h>
 
+#include "Config.h"
+
 namespace jni {
 
 class Cache
@@ -39,12 +41,13 @@ class Cache
   methodIDsByClass_t m_methodIDs;
   members_t m_members;
 
+  void FillBuildIns(void);
   members_t::iterator CacheMembers(jclass clazz);
 
   jfieldID InternalGetFieldID(jclass clazz, bool statiz, const char * name, const char *sig);
   jmethodID InternalGetMethodID(jclass clazz, bool statiz, const char * name, const char *sig);
 public:
-  Cache(JNIEnv *env) : m_env(env) {}
+  Cache(JNIEnv *env) : m_env(env) { FillBuildIns(); }
   virtual ~Cache(void) { Clear(); }
 
   static Cache& GetInstance(JNIEnv *env);
@@ -76,6 +79,47 @@ public:
   v8::Handle<v8::Value> SetMember(jobject obj, const std::string& name, v8::Handle<v8::Value> value);
   bool HasMember(jobject obj, const std::string& name);
   v8::Handle<v8::Array> GetMembers(jobject obj);
+
+  struct buildins_t {
+    struct {
+      struct {
+        jclass Class;
+        jclass Boolean;
+        jclass Number;
+        jclass Byte;
+        jclass Short;
+        jclass Integer;
+        jclass Long;
+        jclass Float;
+        jclass Double;
+        jclass String;
+        jclass RuntimeException;
+
+        struct {
+          jclass Field;
+          jclass Method;
+          jclass Array;
+        } reflect;
+      } lang;
+
+      struct {
+        jclass Date;
+      } util;
+    } java;
+
+    struct {
+      struct {
+        struct {
+          jclass V8Object;
+          jclass V8Array;
+          jclass V8Function;
+          jclass V8Context;
+        } script;
+      } flier;
+    } lu;
+  };
+  
+  buildins_t buildins;
 };
 
 class Env
@@ -85,8 +129,10 @@ protected:
   
   const std::string Extract(const v8::TryCatch& try_catch);
 public:
-  Env(JNIEnv *env) : m_env(env) {}
+  Env(JNIEnv *env) : m_env(env), buildins(Cache::GetInstance(env).buildins) {}
   virtual ~Env() {}
+
+  Cache::buildins_t& buildins;
 
   operator JNIEnv *() const { return m_env; }
   JNIEnv *operator ->() { return m_env; }
@@ -130,10 +176,14 @@ public:
   jobject GetStaticField(jobject obj, const char *name, const char *sig);
 
   bool IsAssignableFrom(jclass sub, const char *sup) {
-    return Cache::GetInstance(m_env).IsAssignableFrom(sub, FindClass(sup)) == JNI_TRUE;
+    return IsAssignableFrom(sub, FindClass(sup));
   }
   bool IsAssignableFrom(const char * sub, jclass sup) {
-    return Cache::GetInstance(m_env).IsAssignableFrom(FindClass(sub), sup) == JNI_TRUE;
+    return IsAssignableFrom(FindClass(sub), sup);
+  }
+  bool IsAssignableFrom(jclass sub, jclass sup) {
+    return m_env->IsAssignableFrom(sub, sup) == JNI_TRUE;
+    //return Cache::GetInstance(m_env).IsAssignableFrom(sub, sup) == JNI_TRUE;
   }
 
   v8::Handle<v8::Value> GetMember(jobject obj, const std::string& name)
@@ -152,7 +202,7 @@ public:
   {
     return Cache::GetInstance(m_env).GetMembers(obj);
   }
-
+  
   jobject NewObject(const char *name, const char *sig = "()V", ...);
   jobjectArray NewObjectArray(size_t size, const char *name = "java/lang/Object", jobject init = NULL);
   
@@ -167,6 +217,7 @@ public:
   jobject NewV8Function(v8::Handle<v8::Function> func);
   jobject NewV8Context(v8::Handle<v8::Context> ctxt);
 
+  void Throw(jclass type, const char *msg);
   void Throw(const char *type, const char *msg);
   bool ThrowIf(const v8::TryCatch& try_catch);
 };

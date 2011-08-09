@@ -47,7 +47,6 @@ template <class T>
 class CBaseJavaObject : public CManagedObject {
 protected:
   typedef CManagedObject __base__;
-  typedef std::vector<jobject> objects_t;
 
   static v8::Handle<v8::Value> NamedGetter(
     v8::Local<v8::String> prop, const v8::AccessorInfo& info)

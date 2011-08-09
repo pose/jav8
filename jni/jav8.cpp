@@ -6,7 +6,6 @@
 
 #include <v8.h>
 
-#include "Config.h"
 #include "Utils.h"
 
 void JNICALL Java_lu_flier_script_ManagedV8Object_internalRelease

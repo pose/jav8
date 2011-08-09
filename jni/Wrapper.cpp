@@ -15,7 +15,7 @@ v8::Handle<v8::Value> CJavaObject::NamedGetter(
 
   v8::String::Utf8Value name(prop);
 
-  return env.GetMember(obj.m_obj, *name);
+  return env.Close(env.GetMember(obj.m_obj, *name));
 }
 v8::Handle<v8::Value> CJavaObject::NamedSetter(
   v8::Local<v8::String> prop, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
@@ -26,7 +26,7 @@ v8::Handle<v8::Value> CJavaObject::NamedSetter(
 
   v8::String::Utf8Value name(prop);
 
-  return env.SetMember(obj.m_obj, *name, value);
+  return env.Close(env.SetMember(obj.m_obj, *name, value));
 }
 v8::Handle<v8::Integer> CJavaObject::NamedQuery(
   v8::Local<v8::String> prop, const v8::AccessorInfo& info)
@@ -46,7 +46,7 @@ v8::Handle<v8::Array> CJavaObject::NamedEnumerator(const v8::AccessorInfo& info)
 
   jni::V8Env env(obj.m_pEnv);
 
-  return env.GetMembers(obj.m_obj);
+  return env.Close(env.GetMembers(obj.m_obj));
 }
 
 v8::Handle<v8::Value> CJavaArray::NamedGetter(
@@ -87,10 +87,9 @@ v8::Handle<v8::Value> CJavaArray::IndexedGetter(
 
   jni::V8Env env(obj.m_pEnv);
 
-  static jclass clazz = env.FindClass("java/lang/reflect/Array");
-  static jmethodID mid = env.GetStaticMethodID("java/lang/reflect/Array", "get", "(Ljava/lang/Object;I)Ljava/lang/Object;");
+  static jmethodID mid = env.GetStaticMethodID(env.buildins.java.lang.reflect.Array, "get", "(Ljava/lang/Object;I)Ljava/lang/Object;");
 
-  return env.Close(env.Wrap(env->CallStaticObjectMethod(clazz, mid, obj.m_obj, index)));
+  return env.Close(env.Wrap(env->CallStaticObjectMethod(env.buildins.java.lang.reflect.Array, mid, obj.m_obj, index)));
 }
 v8::Handle<v8::Value> CJavaArray::IndexedSetter(
   uint32_t index, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
@@ -99,10 +98,9 @@ v8::Handle<v8::Value> CJavaArray::IndexedSetter(
 
   jni::V8Env env(obj.m_pEnv);
 
-  static jclass clazz = env.FindClass("java/lang/reflect/Array");
-  static jmethodID mid = env.GetStaticMethodID(clazz, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V");
+  static jmethodID mid = env.GetStaticMethodID(env.buildins.java.lang.reflect.Array, "set", "(Ljava/lang/Object;ILjava/lang/Object;)V");
 
-  env->CallStaticVoidMethod(clazz, mid, obj.m_obj, index, env.Wrap(value));
+  env->CallStaticVoidMethod(env.buildins.java.lang.reflect.Array, mid, obj.m_obj, index, env.Wrap(value));
 
   return env.Close(value);
 }
@@ -158,7 +156,7 @@ const CJavaFunction::types_t CJavaFunction::GetParameterTypes(JNIEnv *pEnv, jobj
 {
   jni::Env env(pEnv);
 
-  static jmethodID mid = env.GetMethodID("java/lang/reflect/Method", "getParameterTypes", "()[Ljava/lang/Class;");
+  static jmethodID mid = env.GetMethodID(env.buildins.java.lang.reflect.Method, "getParameterTypes", "()[Ljava/lang/Class;");
 
   jobjectArray classes = (jobjectArray) env->CallObjectMethod(method, mid);
 
@@ -219,31 +217,31 @@ bool CJavaFunction::CanConvert(jclass clazz, v8::Handle<v8::Value> value)
 
   if (value->IsTrue() || value->IsFalse() || value->IsBoolean())
   {
-    return env.IsAssignableFrom("java/lang/Boolean", clazz);
+    return env.IsAssignableFrom(env.buildins.java.lang.Boolean, clazz);
   }
   else if (value->IsInt32() || value->IsUint32())
   {
-    return env.IsAssignableFrom("java/lang/Long", clazz) ||
-           env.IsAssignableFrom("java/lang/Integer", clazz) ||
-           env.IsAssignableFrom("java/lang/Short", clazz) ||
-           env.IsAssignableFrom("java/lang/Byte", clazz);
+    return env.IsAssignableFrom(env.buildins.java.lang.Long, clazz) ||
+           env.IsAssignableFrom(env.buildins.java.lang.Integer, clazz) ||
+           env.IsAssignableFrom(env.buildins.java.lang.Short, clazz) ||
+           env.IsAssignableFrom(env.buildins.java.lang.Byte, clazz);
   }
   else if (value->IsNumber())
   {
-    return env.IsAssignableFrom("java/lang/Double", clazz) ||
-           env.IsAssignableFrom("java/lang/Float", clazz);
+    return env.IsAssignableFrom(env.buildins.java.lang.Double, clazz) ||
+           env.IsAssignableFrom(env.buildins.java.lang.Float, clazz);
   }
   else if (value->IsString())
   {
-    return env.IsAssignableFrom("java/lang/String", clazz);
+    return env.IsAssignableFrom(env.buildins.java.lang.String, clazz);
   }
   else if (value->IsDate())
   {
-    return env.IsAssignableFrom("java/util/Date", clazz);
+    return env.IsAssignableFrom(env.buildins.java.util.Date, clazz);
   }
   else if (value->IsArray())
   {
-    return env.IsAssignableFrom("lu/flier/script/V8Array", clazz);
+    return env.IsAssignableFrom(env.buildins.lu.flier.script.V8Array, clazz);
   }
   else if (value.IsEmpty() || value->IsNull() || value->IsUndefined() || value->IsObject())
   {
@@ -270,7 +268,7 @@ v8::Handle<v8::Value> CJavaFunction::Caller(const v8::Arguments& args)
   }
   
   jobject method = func.GetMethod(args);
-  static jmethodID mid = env.GetMethodID("java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
+  static jmethodID mid = env.GetMethodID(env.buildins.java.lang.reflect.Method, "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
   
   jobject result = env->CallObjectMethod(method, mid, thiz, params);
 
