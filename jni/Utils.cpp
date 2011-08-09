@@ -645,7 +645,7 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
 
   jclass clazz = m_env->GetObjectClass(value);
     
-  if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/String")) == JNI_TRUE) 
+  if (IsAssignableFrom(clazz, "java/lang/String")) 
   {
     jstring str = (jstring) value;
     const char *p = m_env->GetStringUTFChars(str, NULL);
@@ -654,39 +654,39 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
 
     m_env->ReleaseStringUTFChars(str, p);
   }
-  else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/Long")) == JNI_TRUE ||
-           m_env->IsAssignableFrom(clazz, FindClass("java/lang/Integer")) == JNI_TRUE ||
-           m_env->IsAssignableFrom(clazz, FindClass("java/lang/Short")) == JNI_TRUE ||
-           m_env->IsAssignableFrom(clazz, FindClass("java/lang/Byte")) == JNI_TRUE) 
+  else if (IsAssignableFrom(clazz, "java/lang/Long") ||
+           IsAssignableFrom(clazz, "java/lang/Integer") ||
+           IsAssignableFrom(clazz, "java/lang/Short") ||
+           IsAssignableFrom(clazz, "java/lang/Byte")) 
   {
     static jmethodID mid = GetMethodID("java/lang/Number", "intValue", "()I");
 
     result = v8::Integer::New(m_env->CallIntMethod(value, mid));
   }
-  else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/Double")) == JNI_TRUE ||
-           m_env->IsAssignableFrom(clazz, FindClass("java/lang/Float")) == JNI_TRUE) 
+  else if (IsAssignableFrom(clazz, "java/lang/Double") ||
+           IsAssignableFrom(clazz, "java/lang/Float")) 
   {
     static jmethodID mid = GetMethodID("java/lang/Number", "doubleValue", "()D");
 
     result = v8::Number::New(m_env->CallDoubleMethod(value, mid));
   }
-  else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/Boolean")) == JNI_TRUE) 
+  else if (IsAssignableFrom(clazz, "java/lang/Boolean")) 
   {
     static jmethodID mid = GetMethodID("java/lang/Boolean", "booleanValue", "()Z");
 
     result = v8::Boolean::New(m_env->CallBooleanMethod(value, mid));
   }      
-  else if (m_env->IsAssignableFrom(clazz, FindClass("java/util/Date")) == JNI_TRUE)
+  else if (IsAssignableFrom(clazz, "java/util/Date"))
   {
     static jmethodID mid = GetMethodID("java/util/Date", "getTime", "()J");
 
     result = v8::Date::New(m_env->CallLongMethod(value, mid));
   }
-  else if (m_env->IsAssignableFrom(clazz, FindClass("java/lang/reflect/Method")) == JNI_TRUE) 
+  else if (IsAssignableFrom(clazz, "java/lang/reflect/Method")) 
   {
     result = CJavaFunction::Wrap(m_env, value);  
   } 
-  else if (m_env->IsAssignableFrom(clazz, FindClass("lu/flier/script/V8Context")) == JNI_TRUE) 
+  else if (IsAssignableFrom(clazz, "lu/flier/script/V8Context")) 
   {
     result = CJavaContext::Wrap(m_env, value);  
   } 
