@@ -16,29 +16,27 @@
 #  define _countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 #endif
 
-#ifdef _MSC_VER
-#  define thread_t __declspec( thread )  // http://msdn.microsoft.com/en-us/library/6yh4a9k1.aspx
-#else
-#  define thread_t __thread // http://gcc.gnu.org/onlinedocs/gcc-3.3.1/gcc/Thread-Local.html
-#endif
-
 namespace jni {
 
+#ifdef _MSC_VER
+  Cache::caches_t *Cache::s_caches = NULL;
+#else
+  __thread Cache::caches_t *Cache::s_caches = NULL;
+#endif
+
 Cache& Cache::GetInstance(JNIEnv *env)
-{
-  thread_t static caches_t *s_caches = NULL;
-  
+{  
   if (!s_caches) s_caches = new caches_t();
 
   caches_t::const_iterator it = s_caches->find(env);
 
-  if (it != s_caches->end()) return *it->second.get();
+  if (it != s_caches->end()) return *it->second;
 
-  std::auto_ptr<Cache> cache(new Cache(env));
+  Cache *cache = new Cache(env);
 
-  s_caches->insert(std::make_pair(env, cache.get()));
+  s_caches->insert(std::make_pair(env, cache));
   
-  return *cache.release();
+  return *cache;
 }
 
 void Cache::Clear(void)

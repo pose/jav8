@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <map>
@@ -8,13 +9,17 @@
 
 #include <v8.h>
 
+#ifndef WIN32
+#  include <pthread.h>
+#endif
+
 #include "Config.h"
 
 namespace jni {
 
 class Cache
 {
-  typedef std::map<JNIEnv *, std::auto_ptr<Cache> > caches_t;
+  typedef std::map<JNIEnv *, Cache *> caches_t;
 
   typedef std::map<std::string, jclass> classes_t;
 
@@ -40,6 +45,12 @@ class Cache
   fieldIDsByClass_t m_fieldIDs;
   methodIDsByClass_t m_methodIDs;
   members_t m_members;
+
+#ifdef _MSC_VER
+  __declspec( thread ) static caches_t *s_caches;
+#else
+  static __thread caches_t *s_caches;
+#endif
 
   void FillBuildIns(void);
   members_t::iterator CacheMembers(jclass clazz);

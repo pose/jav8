@@ -4,7 +4,7 @@
 	
 	<property name="project.name" value="jav8"/>
 	<property name="project.version" value="0.3"/>
-	<property name="project.mode" value="release" />
+	<property name="project.mode" value="debug" />
 	
 	<property name="src.dir" value="${basedir}/src" />
 	<property name="docs.dir" value="${basedir}/docs" />	
@@ -19,6 +19,8 @@
 	<property name="dist.dir" value="${basedir}/dist" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="junit4.path" value="${lib.dir}/junit-4.9b3.jar" />
+	
+	<property file="build.properties" />
 	
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 	    <classpath>
@@ -55,10 +57,7 @@
 	</if>
 	<condition property="cc.compiler" value="msvc" else="gcc">
 		<istrue value="${is_win}"/>
-	</condition>
-	<condition property="cc.optimize" value="nooptimization" else="speed">
-		<istrue value="${is_debug}"/>
-	</condition>
+	</condition>	
 	<condition property="link.incremental">
 		<istrue value="${is_win}"/>
 	</condition>
@@ -78,7 +77,6 @@
 		<isfalse value="${is_x64}"/>
 	</condition>
 		
-	<property file="${basedir}/build.properties" />	
 	<property name="jar.file" value="${project.name}-jsr223-${os.family}-${os.arch}-${project.version}.jar" />
 
 	<path id="build.classpath">
@@ -125,11 +123,11 @@
 			<class name="lu.flier.script.V8Function"/>
 		</javah>
 		
-		<echo>Building JNI library ...</echo>
+		<echo>Building JNI library with ${project.mode} mode ...</echo>
 		<cc name="${cc.compiler}"
 			objdir="${bin.dir}" outfile="${project.name}" 
 			runtime="${link.static_runtime}" link="static" outtype="shared" 
-			multithreaded="true" optimize="${cc.optimize}" incremental="${link.incremental}"
+			multithreaded="true" optimize="speed" incremental="${link.incremental}"
 			debug="${is_debug}" exceptions="true" rtti="true">		
 			
 			<fileset dir="${jni.dir}" includes="*.cpp"/>			
