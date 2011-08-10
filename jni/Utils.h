@@ -9,10 +9,6 @@
 
 #include <v8.h>
 
-#ifndef WIN32
-#  include <pthread.h>
-#endif
-
 #include "Config.h"
 
 namespace jni {

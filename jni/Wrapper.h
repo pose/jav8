@@ -11,7 +11,7 @@
 #include "Utils.h"
 
 namespace jni {
-
+  
 class CManagedObject {
 protected:
   JNIEnv *m_pEnv;
@@ -171,9 +171,7 @@ public:
   static v8::Handle<v8::Array> IndexedEnumerator(const v8::AccessorInfo& info);
 };
 
-class CJavaFunction {
-  typedef CManagedObject __base__;
-
+class CJavaFunction {  
   typedef std::vector<jclass> types_t;
   typedef std::pair<jobject, types_t> method_t;
   typedef std::vector<method_t> methods_t;
