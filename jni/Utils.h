@@ -11,6 +11,29 @@
 
 #include "Config.h"
 
+#ifdef _WIN32
+
+#ifndef _USE_32BIT_TIME_T
+# define _USE_32BIT_TIME_T
+#endif
+
+#else
+
+#include <cmath>
+using std::isnan;
+
+#ifndef isfinite
+# include <limits>
+# define isfinite(val) (val <= std::numeric_limits<double>::max())
+#endif
+
+#include <strings.h>
+#define strnicmp strncasecmp
+
+#define _countof(array) (sizeof(array)/sizeof(array[0]))
+
+#endif
+
 namespace jni {
 
 class Cache

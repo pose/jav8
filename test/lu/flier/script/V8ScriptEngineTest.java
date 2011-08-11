@@ -4,6 +4,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -11,6 +12,8 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -510,5 +513,40 @@ public class V8ScriptEngineTest
 	                  "}");
 	    invocableEngine.invokeFunction("printNames1", namesList);
 	    invocableEngine.invokeFunction("addName", namesList, "Dana");
+    }
+	
+	class TestObject
+	{
+		public String name = "flier";
+	}
+	
+    public Reference<TestObject> runObjectTracer() throws ScriptException, NoSuchMethodException
+    {    	
+    	TestObject obj = new TestObject();
+    	
+    	ScriptEngine eng = createScriptEngine();
+    	
+    	eng.eval("function test(o) { var name = o.name; delete o; return name; }");
+    	
+    	assertEquals("flier", ((Invocable) eng).invokeFunction("test", obj));
+    	
+    	return new WeakReference<TestObject>(obj);
+    }
+    
+    @Test
+    public void testObjectTracer() throws ScriptException, NoSuchMethodException 
+    {   	
+    	Reference<TestObject> ref = runObjectTracer();
+    	
+    	assertNotNull(ref.get());
+    	    	
+    	Runtime.getRuntime().gc();
+    	
+    	assertNotNull(ref.get());
+    	
+    	V8ScriptEngine.gc();
+    	Runtime.getRuntime().gc();
+    	
+    	assertNull(ref.get());    	    
     }
 }

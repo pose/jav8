@@ -12,8 +12,6 @@ public class V8ScriptEngineFactory implements ScriptEngineFactory
     static
     {
         System.loadLibrary("jav8");
-        
-        initialize();
     }
 
     private static List<String> names;
@@ -103,8 +101,6 @@ public class V8ScriptEngineFactory implements ScriptEngineFactory
     @Override
     public native Object getParameter(String key);
     
-    private native static void initialize();
-
     @Override
     public String getMethodCallSyntax(String obj, String m, String... args)
     {

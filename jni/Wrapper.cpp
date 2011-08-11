@@ -1,10 +1,54 @@
 #include "Wrapper.h"
 
+#include <cassert>
+
 #include <string.h>
 
 #include "Utils.h"
 
 namespace jni {
+
+ObjectTracer::ObjectTracer(v8::Handle<v8::Value> handle, CManagedObject *object)
+  : m_handle(v8::Persistent<v8::Value>::New(handle)), m_object(object)
+{
+
+}
+ObjectTracer::~ObjectTracer()
+{
+  if (!m_handle.IsEmpty())
+  {
+    assert(m_handle.IsNearDeath());
+
+    m_handle.ClearWeak();
+    m_handle.Dispose();
+    m_handle.Clear();
+
+    m_object.reset();
+  }
+}
+
+void ObjectTracer::MakeWeak(void)
+{
+  m_handle.MakeWeak(this, WeakCallback);
+}
+
+void ObjectTracer::WeakCallback(v8::Persistent<v8::Value> value, void* parameter)
+{
+  assert(value.IsNearDeath());
+
+  std::auto_ptr<ObjectTracer> tracer(static_cast<ObjectTracer *>(parameter));
+
+  assert(value == tracer->m_handle);
+}
+
+ObjectTracer& ObjectTracer::Trace(v8::Handle<v8::Value> handle, CManagedObject *object)
+{
+  ObjectTracer *tracer = new ObjectTracer(handle, object);
+
+  tracer->MakeWeak();
+
+  return *tracer;
+}
   
 v8::Handle<v8::Value> CJavaObject::NamedGetter(
   v8::Local<v8::String> prop, const v8::AccessorInfo& info)

@@ -182,5 +182,22 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
 			
 		}));
 	}
+
+	public native static void gc();
+
+	/**
+	 * Optional notification that the system is running low on memory.
+	 * V8 uses these notifications to attempt to free memory.
+	 */
+	public native static void lowMemory();
 	
+    /**
+     * Optional notification that the embedder is idle.
+     * V8 uses the notification to reduce memory footprint.
+     * This call can be used repeatedly if the embedder remains idle.
+     * Returns true if the embedder should stop calling IdleNotification
+     * until real work has been done.  This indicates that V8 has done
+     * as much cleanup as it will be able to do.
+     */
+	public native static boolean idle();
 }

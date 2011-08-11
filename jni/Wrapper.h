@@ -11,8 +11,26 @@
 #include "Utils.h"
 
 namespace jni {
-  
-class CManagedObject {
+
+class CManagedObject;
+
+class ObjectTracer
+{
+  v8::Persistent<v8::Value> m_handle;
+  std::auto_ptr<CManagedObject> m_object;
+
+  void MakeWeak(void);
+
+  static void WeakCallback(v8::Persistent<v8::Value> value, void* parameter);
+public:
+  ObjectTracer(v8::Handle<v8::Value> handle, CManagedObject *object);
+  virtual ~ObjectTracer();
+
+  static ObjectTracer& Trace(v8::Handle<v8::Value> handle, CManagedObject *object);
+};
+    
+class CManagedObject 
+{
 protected:
   JNIEnv *m_pEnv;
   jobject m_obj;
@@ -109,7 +127,7 @@ protected:
 
     v8::Handle<v8::Object> instance = s_template->NewInstance();    
 
-    // TODO trace the life cycle with a weak reference
+    ObjectTracer::Trace(instance, obj);
 
     instance->SetInternalField(0, v8::External::New(obj));
 

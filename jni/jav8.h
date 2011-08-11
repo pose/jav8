@@ -37,12 +37,40 @@ extern "C" {
 JNIEXPORT jobject JNICALL Java_lu_flier_script_V8ScriptEngineFactory_getParameter
   (JNIEnv *, jobject, jstring);
 
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* Header for class lu_flier_script_V8ScriptEngine */
+
+#ifndef _Included_lu_flier_script_V8ScriptEngine
+#define _Included_lu_flier_script_V8ScriptEngine
+#ifdef __cplusplus
+extern "C" {
+#endif
+/* Inaccessible static: _00024assertionsDisabled */
 /*
- * Class:     lu_flier_script_V8ScriptEngineFactory
- * Method:    initialize
+ * Class:     lu_flier_script_V8ScriptEngine
+ * Method:    gc
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_lu_flier_script_V8ScriptEngineFactory_initialize
+JNIEXPORT void JNICALL Java_lu_flier_script_V8ScriptEngine_gc
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     lu_flier_script_V8ScriptEngine
+ * Method:    lowMemory
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8ScriptEngine_lowMemory
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     lu_flier_script_V8ScriptEngine
+ * Method:    idle
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_lu_flier_script_V8ScriptEngine_idle
   (JNIEnv *, jclass);
 
 #ifdef __cplusplus

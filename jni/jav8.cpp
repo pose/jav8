@@ -6,7 +6,22 @@
 
 #include <v8.h>
 
+#undef COMPILER
+#include <src/v8.h>
+
 #include "Utils.h"
+
+jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
+{
+  v8::V8::Initialize(); 
+
+  return JNI_VERSION_1_2;
+}
+
+void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
+{
+
+}
 
 void JNICALL Java_lu_flier_script_ManagedV8Object_internalRelease
   (JNIEnv *pEnv, jobject pObj, jlong ptr)
@@ -19,6 +34,24 @@ void JNICALL Java_lu_flier_script_ManagedV8Object_internalRelease
 
     v8::Persistent<v8::Object>((v8::Object *) ptr).Dispose(); 
   }
+}
+
+void JNICALL Java_lu_flier_script_V8ScriptEngine_gc
+  (JNIEnv *, jclass)
+{
+  HEAP->CollectAllAvailableGarbage();
+}
+
+void JNICALL Java_lu_flier_script_V8ScriptEngine_lowMemory
+  (JNIEnv *, jclass)
+{
+  v8::V8::LowMemoryNotification();
+}
+
+jboolean JNICALL Java_lu_flier_script_V8ScriptEngine_idle
+  (JNIEnv *, jclass)
+{
+  return v8::V8::IdleNotification() ? JNI_TRUE : JNI_FALSE;
 }
 
 jobject JNICALL Java_lu_flier_script_V8ScriptEngineFactory_getParameter(JNIEnv *pEnv, jobject pObj, jstring key)
@@ -49,11 +82,6 @@ jobject JNICALL Java_lu_flier_script_V8ScriptEngineFactory_getParameter(JNIEnv *
   env.Throw("java/lang/IllegalArgumentException", "Invalid key");
 
   return NULL;
-}
-
-void JNICALL Java_lu_flier_script_V8ScriptEngineFactory_initialize(JNIEnv *, jclass)
-{
-  v8::V8::Initialize(); 
 }
 
 jlong JNICALL Java_lu_flier_script_V8CompiledScript_internalCompile
