@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <map>
 #include <vector>
 #include <string>
@@ -14,19 +15,53 @@ namespace jni {
 
 class CManagedObject;
 
+template <class T>
 class ObjectTracer
 {
   v8::Persistent<v8::Value> m_handle;
-  std::auto_ptr<CManagedObject> m_object;
+  std::auto_ptr<T> m_object;
 
-  void MakeWeak(void);
+  void MakeWeak(void)
+  {
+    m_handle.MakeWeak(this, WeakCallback);
+  }
 
-  static void WeakCallback(v8::Persistent<v8::Value> value, void* parameter);
+  static void WeakCallback(v8::Persistent<v8::Value> value, void* parameter)
+  {
+    assert(value.IsNearDeath());
+
+    std::auto_ptr<ObjectTracer> tracer(static_cast<ObjectTracer *>(parameter));
+
+    assert(value == tracer->m_handle);
+  }
 public:
-  ObjectTracer(v8::Handle<v8::Value> handle, CManagedObject *object);
-  virtual ~ObjectTracer();
+  ObjectTracer(v8::Handle<v8::Value> handle, T *object)
+    : m_handle(v8::Persistent<v8::Value>::New(handle)), m_object(object)
+  {
 
-  static ObjectTracer& Trace(v8::Handle<v8::Value> handle, CManagedObject *object);
+  }
+  virtual ~ObjectTracer()
+  {
+    if (!m_handle.IsEmpty())
+    {
+      assert(m_handle.IsNearDeath());
+
+      m_handle.ClearWeak();
+      m_handle.Dispose();
+      m_handle.Clear();
+
+      m_object.reset();
+    }
+  }
+
+  static ObjectTracer<T>& Trace(v8::Handle<v8::Value> handle, T *object)
+  {
+    ObjectTracer<T> *tracer = new ObjectTracer<T>(handle, object);
+
+    tracer->MakeWeak();
+
+    return *tracer;
+  }
 };
     
 class CManagedObject 
@@ -127,7 +162,7 @@ protected:
 
     v8::Handle<v8::Object> instance = s_template->NewInstance();    
 
-    ObjectTracer::Trace(instance, obj);
+    ObjectTracer<T>::Trace(instance, obj);
 
     instance->SetInternalField(0, v8::External::New(obj));
 
@@ -222,9 +257,15 @@ public:
 
     v8::Handle<v8::FunctionTemplate> func_tmpl = v8::FunctionTemplate::New();    
 
-    func_tmpl->SetCallHandler(Caller, v8::External::New(new CJavaFunction(pEnv, methods)));
+    CJavaFunction *func = new CJavaFunction(pEnv, methods);
 
-    return env.Close(func_tmpl->GetFunction());
+    func_tmpl->SetCallHandler(Caller, v8::External::New(func));
+
+    v8::Handle<v8::Function> instance = func_tmpl->GetFunction();
+
+    ObjectTracer<CJavaFunction>::Trace(instance, func);
+
+    return env.Close(instance);
   }
   static v8::Handle<v8::Value> Caller(const v8::Arguments& args);
 };
