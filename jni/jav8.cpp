@@ -24,13 +24,11 @@ void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
 }
 
 void JNICALL Java_lu_flier_script_ManagedV8Object_internalRelease
-  (JNIEnv *pEnv, jobject pObj, jlong ptr)
+  (JNIEnv *, jobject, jlong ptr)
 {
   if (ptr) 
   { 
-    if (v8::Isolate::GetCurrent() == NULL) {
-      v8::Isolate::New()->Enter();
-    }
+    jni::V8Isolate isolate;
 
     v8::Persistent<v8::Object>((v8::Object *) ptr).Dispose(); 
   }
@@ -39,18 +37,24 @@ void JNICALL Java_lu_flier_script_ManagedV8Object_internalRelease
 void JNICALL Java_lu_flier_script_V8ScriptEngine_gc
   (JNIEnv *, jclass)
 {
+  jni::V8Isolate isolate;
+
   HEAP->CollectAllAvailableGarbage();
 }
 
 void JNICALL Java_lu_flier_script_V8ScriptEngine_lowMemory
   (JNIEnv *, jclass)
 {
+  jni::V8Isolate isolate;
+
   v8::V8::LowMemoryNotification();
 }
 
 jboolean JNICALL Java_lu_flier_script_V8ScriptEngine_idle
   (JNIEnv *, jclass)
 {
+  jni::V8Isolate isolate;
+
   return v8::V8::IdleNotification() ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -102,12 +106,10 @@ jlong JNICALL Java_lu_flier_script_V8CompiledScript_internalCompile
 }
 
 void JNICALL Java_lu_flier_script_V8CompiledScript_internalRelease
-  (JNIEnv *pEnv, jobject pObj, jlong ptr)
+  (JNIEnv *, jobject, jlong ptr)
 {  
   if (ptr) { 
-    if (v8::Isolate::GetCurrent() == NULL) {
-      v8::Isolate::New()->Enter();
-    }
+    jni::V8Isolate isolate;
 
     v8::Persistent<v8::Script>((v8::Script *) ptr).Dispose(); 
   }
@@ -130,7 +132,7 @@ jobject JNICALL Java_lu_flier_script_V8Context_getEntered(JNIEnv *pEnv, jclass)
   if (!v8::Context::InContext()) return NULL;
 
   jni::V8Env env(pEnv);
-
+  
   return env.NewV8Context(v8::Context::GetEntered());
 }
 
@@ -176,9 +178,7 @@ void JNICALL Java_lu_flier_script_V8Context_internalRelease
   (JNIEnv *pEnv, jobject, jlong ptr)
 {
   if (ptr) { 
-    if (v8::Isolate::GetCurrent() == NULL) {
-      v8::Isolate::New()->Enter();
-    }
+    jni::V8Isolate isolate;
 
     v8::Persistent<v8::Context> ctxt((v8::Context *) ptr);
 
@@ -190,17 +190,21 @@ void JNICALL Java_lu_flier_script_V8Context_internalRelease
 void JNICALL Java_lu_flier_script_V8Context_internalEnter
   (JNIEnv *pEnv, jobject, jlong ptr)
 {
-  jni::V8Env env(pEnv);
+  if (ptr) { 
+    jni::V8Env env(pEnv);
 
-  if (ptr) { v8::Persistent<v8::Context>((v8::Context *) ptr)->Enter(); }
+    v8::Persistent<v8::Context>((v8::Context *) ptr)->Enter(); 
+  }
 }
 
 void JNICALL Java_lu_flier_script_V8Context_internalLeave
   (JNIEnv *pEnv, jobject, jlong ptr)
 {
-  jni::V8Env env(pEnv);
+  if (ptr) { 
+    jni::V8Env env(pEnv);
 
-  if (ptr) { v8::Persistent<v8::Context>((v8::Context *) ptr)->Exit(); }
+    v8::Persistent<v8::Context>((v8::Context *) ptr)->Exit(); 
+  }
 }
 
 jobject JNICALL Java_lu_flier_script_V8Context_internalGetGlobal

@@ -252,11 +252,23 @@ public:
   bool ThrowIf(const v8::TryCatch& try_catch);
 };
 
-class V8Env : public Env {
+struct V8Isolate {
+  V8Isolate() {
+    if (v8::Isolate::GetCurrent() == NULL) 
+    {
+      v8::Isolate::New()->Enter();
+    }
+  }
+};
+
+class V8Env : public Env, public V8Isolate {
   v8::HandleScope handle_scope;  
   v8::TryCatch try_catch;
 public:
-  V8Env(JNIEnv *env) : Env(env) {}
+  V8Env(JNIEnv *env) : Env(env) 
+  {
+
+  }
   virtual ~V8Env() { ThrowIf(try_catch); }
 
   bool HasCaught() const { return try_catch.HasCaught(); }

@@ -428,7 +428,7 @@ static struct {
 
 bool Env::ThrowIf(const v8::TryCatch& try_catch)
 {
-  if (try_catch.HasCaught())
+  if (try_catch.HasCaught() && !try_catch.Exception().IsEmpty())
   {
     v8::HandleScope handle_scope;
 
