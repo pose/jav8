@@ -30,7 +30,9 @@ void JNICALL Java_lu_flier_script_ManagedV8Object_internalRelease
   { 
     jni::V8Isolate isolate;
 
-    v8::Persistent<v8::Object>((v8::Object *) ptr).Dispose(); 
+    if (isolate.IsAlive()) {
+      v8::Persistent<v8::Object>((v8::Object *) ptr).Dispose(); 
+    }
   }
 }
 
@@ -111,7 +113,9 @@ void JNICALL Java_lu_flier_script_V8CompiledScript_internalRelease
   if (ptr) { 
     jni::V8Isolate isolate;
 
-    v8::Persistent<v8::Script>((v8::Script *) ptr).Dispose(); 
+    if (isolate.IsAlive()) {
+      v8::Persistent<v8::Script>((v8::Script *) ptr).Dispose(); 
+    }
   }
 }
 
@@ -180,10 +184,12 @@ void JNICALL Java_lu_flier_script_V8Context_internalRelease
   if (ptr) { 
     jni::V8Isolate isolate;
 
-    v8::Persistent<v8::Context> ctxt((v8::Context *) ptr);
+    if (isolate.IsAlive()) {
+      v8::Persistent<v8::Context> ctxt((v8::Context *) ptr);
 
-    ctxt->Exit();
-    ctxt.Dispose(); 
+      ctxt->Exit();
+      ctxt.Dispose(); 
+    }
   }
 }
 

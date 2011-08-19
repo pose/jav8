@@ -253,11 +253,10 @@ public:
 };
 
 struct V8Isolate {
-  V8Isolate() {
-    if (v8::Isolate::GetCurrent() == NULL) 
-    {
-      v8::Isolate::New()->Enter();
-    }
+  V8Isolate();
+
+  bool IsAlive() {
+    return !v8::V8::IsExecutionTerminating(v8::Isolate::GetCurrent()) && !v8::V8::IsDead();
   }
 };
 

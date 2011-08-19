@@ -9,6 +9,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#undef COMPILER
+#include <src/v8.h>
+
 #include "Config.h"
 #include "Wrapper.h"
 
@@ -588,6 +591,15 @@ jobject Env::NewV8Context(v8::Handle<v8::Context> ctxt)
 
   jlong value = (jlong) *v8::Persistent<v8::Context>::New(ctxt);
   return m_env->NewObject(buildins.lu.flier.script.V8Context, cid, value);  
+}
+
+V8Isolate::V8Isolate() {
+  if (v8::Isolate::GetCurrent() == NULL) 
+  {
+    v8::Isolate::New()->Enter();
+
+    v8::internal::Isolate::Current()->InitializeLoggingAndCounters();
+  }
 }
 
 jobject V8Env::Wrap(v8::Handle<v8::Value> value)
