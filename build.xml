@@ -40,7 +40,10 @@
 		<os family="unix" />
 	</condition>		
 	<condition property="is_osx">
-		<os name="Mac OS X" />
+		<or>
+			<os name="Mac OS X" />
+			<os name="darwin" />
+		</or>	
 	</condition>
 	<condition property="is_x64">
 		<equals arg1="${os.arch}" arg2="amd64"/>
@@ -168,7 +171,8 @@
 		<if>		
 			<equals arg1="${is_osx}" arg2="true" />
 			<then>
-			    <rename src="lib${project.name}.so" dest="lib${project.name}.dylib" replace="yes"/>
+				<echo>rename lib${project.name}.so to lib${project.name}.dylib for Mac OSX</echo>
+			    <move file="lib${project.name}.so" tofile="lib${project.name}.dylib" overwrite="yes"/>
 			</then>
 		</if>
 		
