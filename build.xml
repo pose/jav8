@@ -83,7 +83,15 @@
 		<isfalse value="${is_x64}"/>
 	</condition>
 		
-	<property name="jar.file" value="${dist.dir}/${project.name}-jsr223-${os.family}-${os.arch}-${project.version}.jar" />
+    <if>        
+        <equals arg1="${is_osx}" arg2="true" />
+        <then>
+        	<property name="jar.file" value="${dist.dir}/${project.name}-jsr223-${os.name}-${os.arch}-${project.version}.jar" />
+        </then>
+        <else>
+            <property name="jar.file" value="${dist.dir}/${project.name}-jsr223-${os.family}-${os.arch}-${project.version}.jar" />
+        </else>
+    </if>
 
 	<path id="build.classpath">
 		<fileset dir="${lib.dir}">
