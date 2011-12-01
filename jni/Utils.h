@@ -34,7 +34,7 @@ using std::isnan;
 
 #endif
 
-#ifdef __OSX__
+#ifdef __APPLE__
 # include <pthread.h>
 #endif
 
@@ -72,7 +72,7 @@ class Cache
 #ifdef _MSC_VER
   __declspec( thread ) static caches_t *s_caches;
 #else 
-# ifdef __OSX__
+# ifdef __APPLE__
   static pthread_key_t s_caches_key;
 # else
   static __thread caches_t *s_caches;

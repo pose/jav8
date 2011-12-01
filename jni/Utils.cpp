@@ -23,7 +23,7 @@ namespace jni {
 #ifdef _MSC_VER
   Cache::caches_t *Cache::s_caches = NULL;
 #else
-# ifdef __OSX__
+# ifdef __APPLE__
   pthread_key_t Cache::s_caches_key = NULL;
 # else
   __thread Cache::caches_t *Cache::s_caches = NULL;
@@ -32,7 +32,7 @@ namespace jni {
 
 Cache& Cache::GetInstance(JNIEnv *env)
 {  
-#ifdef __OSX__
+#ifdef __APPLE__
   if (!s_caches_key)
   {
     pthread_key_create(&s_caches_key, NULL); 
