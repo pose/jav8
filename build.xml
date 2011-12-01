@@ -225,4 +225,23 @@
 		<echo file="gdb.cmds" append="false">set args ${gdb.args}</echo>
 		<echo>gdb java -x gdb.cmds</echo>
 	</target>
+	<target name="jdb">
+        <junit printsummary="yes" haltonfailure="yes" fork="yes">            
+        	<jvmarg value="-Xdebug"/>
+        	<jvmarg value="-Xnoagent"/>        	
+        	<jvmarg value="-Xrunjdwp:transport=dt_socket,server=y,suspend=y"/>
+        	<jvmarg value="-verbose:jni"/>
+        	<jvmarg value="-Djava.compiler=none"/>
+        	<jvmarg value="-Djava.library.path=${basedir}" />
+            <formatter type="plain" usefile="flase" />
+            <formatter type="xml"/>
+            <test name="lu.flier.script.V8ScriptEngineTest" todir="${test.report.dir}" />
+            <classpath>
+                <pathelement location="${jar.file}" />
+                <pathelement location="${test.classes.dir}" />
+                <pathelement location="${junit4.path}" />                           
+                <pathelement path="${java.class.path}" />
+            </classpath>
+        </junit>		
+	</target>
 </project>
