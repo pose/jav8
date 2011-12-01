@@ -39,6 +39,9 @@
 	<condition property="is_unix">
 		<os family="unix" />
 	</condition>		
+	<condition property="is_osx">
+		<os name="Mac OS X" />
+	</condition>
 	<condition property="is_x64">
 		<equals arg1="${os.arch}" arg2="amd64"/>
 	</condition>
@@ -157,9 +160,22 @@
 			<libset dir="${env.V8_HOME}" libs="${lib.v8}"/>
 		</cc>
 		
+		<!--
+		Core Java APIs and the Java Runtime on Mac OS X
+		
+		http://developer.apple.com/library/mac/#documentation/java/conceptual/java14development/05-corejavaapis/corejavaapis.html
+		-->
+		<if>		
+			<equals arg1="${is_osx}" arg2="true" />
+			<then>
+			    <rename src="lib${project.name}.so" dest="lib${project.name}.dylib" replace="yes"/>
+			</then>
+		</if>
+		
 		<copy todir="${classes.dir}">
 			<fileset dir="${out.dir}" file="*.dll"/>
 			<fileset dir="${out.dir}" file="*.so"/>
+			<fileset dir="${out.dir}" file="*.dylib"/>
 		</copy>
 	</target>
 	<target name="jar" depends="jni">
@@ -168,6 +184,7 @@
 			<include name="**/*.class"/>
 			<include name="**/*.dll"/>
 			<include name="**/*.so"/>
+			<include name="**/*.dylib"/>
 			<include name="META-INF/**"/>
 		</jar>
 	</target>
@@ -226,6 +243,13 @@
 		<echo>gdb java -x gdb.cmds</echo>
 	</target>
 	<target name="jdb">
+		<!-- 
+		
+		jdb - The Java Debugger
+		
+		http://docs.oracle.com/javase/7/docs/technotes/tools/solaris/jdb.html 
+		
+		-->
         <junit printsummary="yes" haltonfailure="yes" fork="yes">            
         	<jvmarg value="-Xdebug"/>
         	<jvmarg value="-Xnoagent"/>        	

@@ -80,6 +80,8 @@ public class V8ScriptEngineFactory implements ScriptEngineFactory
 
         InputStream in = V8ScriptEngineFactory.class.getClassLoader().getResourceAsStream(filename);
 
+        if (in == null) throw new IOException("missing JNI library - " + filename);
+        
         int pos = filename.lastIndexOf('.');
 
         File file = File.createTempFile(filename.substring(0, pos), filename.substring(pos));
