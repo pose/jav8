@@ -34,6 +34,10 @@ using std::isnan;
 
 #endif
 
+#ifdef __OSX__
+# include <pthread.h>
+#endif
+
 namespace jni {
 
 class Cache
@@ -67,8 +71,12 @@ class Cache
 
 #ifdef _MSC_VER
   __declspec( thread ) static caches_t *s_caches;
-#else
+#else 
+# ifdef __OSX__
+  static pthread_key_t s_caches_key;
+# else
   static __thread caches_t *s_caches;
+# endif
 #endif
 
   void FillBuildIns(void);
@@ -255,9 +263,7 @@ public:
 struct V8Isolate {
   V8Isolate();
 
-  bool IsAlive() {
-    return !v8::V8::IsExecutionTerminating(v8::Isolate::GetCurrent()) && !v8::V8::IsDead();
-  }
+  bool IsAlive();
 };
 
 class V8Env : public Env, public V8Isolate {

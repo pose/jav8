@@ -6,8 +6,12 @@
 
 #include <v8.h>
 
-#undef COMPILER
-#include <src/v8.h>
+#include "Config.h"
+
+#ifdef USE_INTERNAL_V8_API
+  #undef COMPILER
+  #include <src/v8.h>
+#endif
 
 #include "Utils.h"
 
@@ -41,7 +45,11 @@ void JNICALL Java_lu_flier_script_V8ScriptEngine_gc
 {
   jni::V8Isolate isolate;
 
-  HEAP->CollectAllAvailableGarbage();
+  #ifdef USE_INTERNAL_V8_API
+    HEAP->CollectAllAvailableGarbage();
+  #else
+    // TODO throw a exception
+  #endif
 }
 
 void JNICALL Java_lu_flier_script_V8ScriptEngine_lowMemory

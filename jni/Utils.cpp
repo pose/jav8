@@ -9,10 +9,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-#undef COMPILER
-#include <src/v8.h>
-
 #include "Config.h"
+
+#ifdef USE_INTERNAL_V8_API
+  #undef COMPILER
+  #include <src/v8.h>
+#endif
+
 #include "Wrapper.h"
 
 namespace jni {
@@ -20,12 +23,26 @@ namespace jni {
 #ifdef _MSC_VER
   Cache::caches_t *Cache::s_caches = NULL;
 #else
+# ifdef __OSX__
+  pthread_key_t Cache::s_caches_key = NULL;
+# else
   __thread Cache::caches_t *Cache::s_caches = NULL;
+# endif
 #endif
 
 Cache& Cache::GetInstance(JNIEnv *env)
 {  
+#ifdef __OSX__
+  if (!s_caches_key)
+  {
+    pthread_key_create(&s_caches_key, NULL); 
+    pthread_setspecific(s_caches_key, new caches_t());
+  }
+
+  caches_t *s_caches = (caches_t *) pthread_getspecific(s_caches_key);
+#else
   if (!s_caches) s_caches = new caches_t();
+#endif
 
   caches_t::const_iterator it = s_caches->find(env);
 
@@ -593,14 +610,30 @@ jobject Env::NewV8Context(v8::Handle<v8::Context> ctxt)
   return m_env->NewObject(buildins.lu.flier.script.V8Context, cid, value);  
 }
 
+#ifdef V8_SUPPORT_ISOLATE
+
 V8Isolate::V8Isolate() {
   if (v8::Isolate::GetCurrent() == NULL) 
   {
     v8::Isolate::New()->Enter();
 
+  #ifdef USE_INTERNAL_V8_API
     v8::internal::Isolate::Current()->InitializeLoggingAndCounters();
+  #endif
   }
 }
+
+bool V8Isolate::IsAlive() {
+  return !v8::V8::IsExecutionTerminating(v8::Isolate::GetCurrent()) && !v8::V8::IsDead();
+}
+
+#else
+
+V8Isolate::V8Isolate() {}
+
+bool V8Isolate::IsAlive() { return !v8::V8::IsExecutionTerminating() && !v8::V8::IsDead(); }
+
+#endif
 
 jobject V8Env::Wrap(v8::Handle<v8::Value> value)
 {

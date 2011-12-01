@@ -3,8 +3,8 @@
 	<property environment="env"/>
 	
 	<property name="project.name" value="jav8"/>
-	<property name="project.version" value="0.3"/>
-	<property name="project.mode" value="debug" />
+	<property name="project.version" value="0.4"/>
+	<property name="project.mode" value="release" />
 	
 	<property name="src.dir" value="${basedir}/src" />
 	<property name="docs.dir" value="${basedir}/docs" />	
@@ -146,6 +146,7 @@
 					<pathelement path="${env.JAVA_HOME}/include"/>							
 					<pathelement path="${env.JAVA_HOME}/include/win32"/>
           			<pathelement path="${env.JAVA_HOME}/include/linux"/>
+					<pathelement path="${env.JAVA_HOME}/include/darwin"/>
 					<pathelement path="${env.V8_HOME}"/>
 					<pathelement path="${env.V8_HOME}/include"/>
 				</path>
