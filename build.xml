@@ -161,6 +161,7 @@
 					<pathelement path="${env.JAVA_HOME}/include/win32"/>
           			<pathelement path="${env.JAVA_HOME}/include/linux"/>
 					<pathelement path="${env.JAVA_HOME}/include/darwin"/>
+					<pathelement path="/System/Library/Frameworks/JavaVM.framework/Headers/"/>
 					<pathelement path="${env.V8_HOME}"/>
 					<pathelement path="${env.V8_HOME}/include"/>
 				</path>
@@ -180,7 +181,7 @@
 			<equals arg1="${is_osx}" arg2="true" />
 			<then>
 				<echo>rename lib${project.name}.so to lib${project.name}.dylib for Mac OSX</echo>
-			    <move file="lib${project.name}.so" tofile="lib${project.name}.dylib" overwrite="yes"/>
+			    <move file="lib${project.name}.so" tofile="lib${project.name}.dylib" overwrite="yes" failonerror="no"/>
 			</then>
 		</if>
 		
