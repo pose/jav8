@@ -238,7 +238,26 @@ public class V8ScriptEngineTest
     	
     	assertArrayEquals(new Object[] {1, 2, 3}, array.toArray());    	
     }
-    
+
+    @Test
+    public void testCreateJavascriptObject() throws ScriptException, NoSuchMethodException
+    {
+    	Bindings engineScope = this.eng.getBindings(ScriptContext.ENGINE_SCOPE);
+
+        eng.eval("var newVar;");
+        V8Object temp = ((V8ScriptEngine)this.eng).createObject();
+        temp.put("foo", "bar");
+        temp.put("biz", 123);
+        engineScope.put("newVar", temp);
+
+        eng.eval("var z = newVar; var a = newVar.foo; var b = newVar.biz; var c = newVar.baz;");
+        assertEquals(V8Object.class, engineScope.get("z").getClass());
+        assertEquals("bar", ((V8Object)engineScope.get("z")).get("foo"));
+        assertEquals("bar", engineScope.get("a"));
+        assertEquals(123, engineScope.get("b"));
+        assertEquals(null, engineScope.get("c"));
+    }
+
     @Test
     public void testDate() throws ScriptException, NoSuchMethodException
     {
@@ -548,5 +567,44 @@ public class V8ScriptEngineTest
     	Runtime.getRuntime().gc();
     	
     	assertNull(ref.get());    	    
+    }
+
+    @Test
+    public void testCreateArray() throws ScriptException {
+    	V8Context ctxt = ((V8ScriptEngine) this.eng).getV8Context();
+        Bindings g = this.eng.getBindings(ScriptContext.ENGINE_SCOPE);
+        this.eng.eval("var arr;");
+        Object[] data = new Object[] { 123 };
+        V8Array arr = ctxt.createArray(data);
+        assertEquals(1, arr.size());
+        assertEquals(123, arr.get(0));
+        g.put("arr", ctxt.createArray(data));
+        this.eng.eval("var d = arr.length; var a = arr[0];");
+        assertEquals(1, g.get("d"));
+        assertEquals(123, g.get("a"));
+
+        arr.setElements(new Object[] { 456 });
+        assertEquals(456, arr.get(0));
+    }
+
+    @Test 
+    public void testNestedToArray() throws ScriptException {
+        long total = 0;
+
+        Bindings g = this.eng.getBindings(ScriptContext.ENGINE_SCOPE);
+        this.eng.eval("var b = []; for (var i = 0; i < 1024; i++) { b[i] = [\"hello\" + i, \"world\" + i]; }");
+        V8Array arr = (V8Array)g.get("b");
+
+        Object[] vals = arr.toArray();
+
+        assertEquals(vals.length, 1024);
+
+        for (int i = 0; i < vals.length; i++) {
+            Object[] inner = (Object [])vals[i];
+
+            assertEquals(inner.length, 2);
+            assertEquals(inner[0], "hello" + i);
+            assertEquals(inner[1], "world" + i);
+        }
     }
 }

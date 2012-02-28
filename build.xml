@@ -109,6 +109,7 @@
 	</target>
 	<target name="compile" depends="prepare">
 		<javac srcdir="${src.dir}" destdir="${classes.dir}" includeantruntime="false">
+                        <classpath refid="build.classpath"/>
 			<include name="**/*.java"/>
 		</javac>
 		<copy todir="${classes.dir}/META-INF">		
@@ -210,7 +211,7 @@
 		</javac>				
 		<junit printsummary="yes" haltonfailure="yes" fork="yes">
 			<jvmarg value="-Djava.library.path=${basedir}" />
-			<formatter type="plain" usefile="flase" />
+			<formatter type="plain" usefile="false" />
 			<formatter type="xml"/>
 			<test name="lu.flier.script.V8ScriptEngineTest" todir="${test.report.dir}" />
 			<classpath>

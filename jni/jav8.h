@@ -154,6 +154,22 @@ JNIEXPORT jboolean JNICALL Java_lu_flier_script_V8Context_inContext
 
 /*
  * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateObject
+ * Signature: ()Llu/flier/script/V8Object;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateObject
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateArray
+ * Signature: ([Ljava/lang/Object;)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateArray
+  (JNIEnv *, jobject, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
  * Method:    internalCreate
  * Signature: ()J
  */
@@ -288,10 +304,26 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Array_internalGet
 
 /*
  * Class:     lu_flier_script_V8Array
+ * Method:    internalSetElements
+ * Signature: (J[Ljava/lang/Object;)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetElements
+  (JNIEnv *, jobject, jlong, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
  * Method:    internalGetSize
  * Signature: (J)I
  */
 JNIEXPORT jint JNICALL Java_lu_flier_script_V8Array_internalGetSize
+  (JNIEnv *, jobject, jlong);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalToObjectArray
+ * Signature: (J)[Ljava/lang/Object;
+ */
+JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToObjectArray
   (JNIEnv *, jobject, jlong);
 
 #ifdef __cplusplus

@@ -5,6 +5,10 @@
 #include <vector>
 #include <string>
 
+#ifdef __APPLE__
+#include <pthread.h>
+#endif
+
 #include <jni.h>
 
 #include <v8.h>
@@ -100,6 +104,7 @@ template <class T>
 class CBaseJavaObject : public CManagedObject {
 protected:
   typedef CManagedObject __base__;
+  typedef v8::Persistent<v8::ObjectTemplate> template_t;
 
   static v8::Handle<v8::Value> NamedGetter(
     v8::Local<v8::String> prop, const v8::AccessorInfo& info)
@@ -158,7 +163,31 @@ protected:
     v8::HandleScope handle_scope;
     v8::TryCatch try_catch;
 
+#ifdef __APPLE__
+    static pthread_key_t s_object_template_key = NULL;
+
+    if (!s_object_template_key) {
+        pthread_key_create(&s_object_template_key, NULL);
+    }
+
+    template_t *ptr_s_template = (template_t *)pthread_getspecific(s_object_template_key);
+    template_t s_template;
+
+    if (!ptr_s_template) {
+        s_template = CreateObjectTemplate();
+        pthread_setspecific(s_object_template_key, ptr_s_template);
+    } else {
+        s_template = *ptr_s_template;
+    }
+#else
+#ifdef _MSC_VER
+    // BUG: Multithreaded usage is (probably) broken on Windows
     static v8::Persistent<v8::ObjectTemplate> s_template(CreateObjectTemplate());
+#else
+    static __thread v8::Persistent<v8::ObjectTemplate> s_template(CreateObjectTemplate());
+#endif
+#endif
+
 
     v8::Handle<v8::Object> instance = s_template->NewInstance();    
 

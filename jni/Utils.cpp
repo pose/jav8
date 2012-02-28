@@ -36,10 +36,14 @@ Cache& Cache::GetInstance(JNIEnv *env)
   if (!s_caches_key)
   {
     pthread_key_create(&s_caches_key, NULL); 
-    pthread_setspecific(s_caches_key, new caches_t());
   }
 
   caches_t *s_caches = (caches_t *) pthread_getspecific(s_caches_key);
+
+  if (!s_caches) {
+    s_caches = new caches_t();
+    pthread_setspecific(s_caches_key, new caches_t());
+  }
 #else
   if (!s_caches) s_caches = new caches_t();
 #endif
@@ -612,24 +616,26 @@ jobject Env::NewV8Context(v8::Handle<v8::Context> ctxt)
 
 #ifdef V8_SUPPORT_ISOLATE
 
-V8Isolate::V8Isolate() {
+void V8Isolate::ensureInIsolate() {
   if (v8::Isolate::GetCurrent() == NULL) 
   {
-    v8::Isolate::New()->Enter();
+      v8::Isolate* isolate = v8::Isolate::New();
+      isolate->Enter();
+      assert(isolate == v8::Isolate::GetCurrent());
 
-  #ifdef USE_INTERNAL_V8_API
-    v8::internal::Isolate::Current()->InitializeLoggingAndCounters();
-  #endif
+    #ifdef USE_INTERNAL_V8_API
+      v8::internal::Isolate::Current()->InitializeLoggingAndCounters();
+    #endif
   }
 }
 
 bool V8Isolate::IsAlive() {
-  return !v8::V8::IsExecutionTerminating(v8::Isolate::GetCurrent()) && !v8::V8::IsDead();
+  return v8::Isolate::GetCurrent() != NULL && !v8::V8::IsExecutionTerminating(v8::Isolate::GetCurrent()) && !v8::V8::IsDead();
 }
 
 #else
 
-V8Isolate::V8Isolate() {}
+void V8Isolate::ensureInIsolate() { }
 
 bool V8Isolate::IsAlive() { return !v8::V8::IsExecutionTerminating() && !v8::V8::IsDead(); }
 
@@ -668,18 +674,7 @@ jobject V8Env::Wrap(v8::Handle<v8::Object> obj)
   if (obj->IsArray())
   {
   #ifdef USE_NATIVE_ARRAY
-    v8::Handle<v8::Array> array = v8::Handle<v8::Array>::Cast(obj);
-
-    jobjectArray items = NewObjectArray(array->Length());
-
-    for (size_t i=0; i<array->Length(); i++)
-    {      
-      jobject item = Wrap(array->Get(i));
-      m_env->SetObjectArrayElement(items, i, item);
-      m_env->DeleteLocalRef(item);
-    }
-
-    return items;
+    return WrapArrayToNative(obj);
   #else
     return NewV8Array(v8::Handle<v8::Array>::Cast(obj));
   #endif
@@ -688,6 +683,37 @@ jobject V8Env::Wrap(v8::Handle<v8::Object> obj)
   if (CManagedObject::IsWrapped(obj)) return CManagedObject::Unwrap(obj).GetObject();
 
   return NewV8Object(obj);
+}
+
+jobjectArray V8Env::WrapArrayToNative(v8::Handle<v8::Value> obj)
+{
+  assert(v8::Context::InContext());
+  assert(obj->IsArray());
+
+  v8::HandleScope handle_scope;
+
+  v8::Handle<v8::Array> array = v8::Handle<v8::Array>::Cast(obj);
+
+  jobjectArray items = NewObjectArray(array->Length());
+
+  for (size_t i=0; i<array->Length(); i++)
+  {      
+    jobject item;
+    v8::Handle<v8::Value> obj = array->Get(i);
+
+    if (obj->IsArray()) 
+    {
+      item = WrapArrayToNative(obj);
+    } else 
+    {
+      item = Wrap(obj);
+    }
+
+    m_env->SetObjectArrayElement(items, i, item);
+    m_env->DeleteLocalRef(item);
+  }
+
+  return items;
 }
 
 v8::Handle<v8::Value> V8Env::Wrap(jobject value)
@@ -700,7 +726,7 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
   v8::Handle<v8::Value> result;
 
   jclass clazz = m_env->GetObjectClass(value);
-    
+
   if (IsAssignableFrom(clazz, buildins.java.lang.String)) 
   {
     jstring str = (jstring) value;
@@ -746,6 +772,18 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
   {
     result = CJavaContext::Wrap(m_env, value);  
   } 
+  else if (IsAssignableFrom(clazz, buildins.lu.flier.script.V8Array)) 
+  {
+    jclass clazz = m_env->GetObjectClass(value);
+    jfieldID fid = GetFieldID(clazz, "obj", "J");
+    result = v8::Handle<v8::Array>((v8::Array *) m_env->GetLongField(value, fid));
+  } 
+  else if (IsAssignableFrom(clazz, buildins.lu.flier.script.V8Object)) 
+  {
+    jclass clazz = m_env->GetObjectClass(value);
+    jfieldID fid = GetFieldID(clazz, "obj", "J");
+    result = v8::Handle<v8::Object>((v8::Object *) m_env->GetLongField(value, fid));
+  }
   else 
   { 
     static jmethodID mid = GetMethodID(buildins.java.lang.Class, "isArray", "()Z");
