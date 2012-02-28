@@ -774,14 +774,14 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
   } 
   else if (IsAssignableFrom(clazz, buildins.lu.flier.script.V8Array)) 
   {
-    jclass clazz = m_env->GetObjectClass(value);
-    jfieldID fid = GetFieldID(clazz, "obj", "J");
+    static jfieldID fid = GetFieldID(buildins.lu.flier.script.V8Array, "obj", "J");
+
     result = v8::Handle<v8::Array>((v8::Array *) m_env->GetLongField(value, fid));
   } 
   else if (IsAssignableFrom(clazz, buildins.lu.flier.script.V8Object)) 
   {
-    jclass clazz = m_env->GetObjectClass(value);
-    jfieldID fid = GetFieldID(clazz, "obj", "J");
+    static jfieldID fid = GetFieldID(buildins.lu.flier.script.V8Object, "obj", "J");
+
     result = v8::Handle<v8::Object>((v8::Object *) m_env->GetLongField(value, fid));
   }
   else 

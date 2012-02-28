@@ -188,6 +188,7 @@
 		
 		<copy todir="${classes.dir}">
 			<fileset dir="${out.dir}" file="*.dll"/>
+			<fileset dir="${out.dir}" file="*.pdb"/>
 			<fileset dir="${out.dir}" file="*.so"/>
 			<fileset dir="${out.dir}" file="*.dylib"/>
 		</copy>
@@ -262,6 +263,13 @@
 		jdb - The Java Debugger
 		
 		http://docs.oracle.com/javase/7/docs/technotes/tools/solaris/jdb.html 
+		
+		$>ant jdb
+		...
+		[junit] Listening for transport dt_socket at address: <port>
+		...
+		
+		$>jdb -connect com.sun.jdi.SocketAttach:port=<port>
 		
 		-->
         <junit printsummary="yes" haltonfailure="yes" fork="yes">            
