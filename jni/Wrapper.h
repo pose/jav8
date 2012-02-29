@@ -184,10 +184,11 @@ protected:
     // BUG: Multithreaded usage is (probably) broken on Windows
     static v8::Persistent<v8::ObjectTemplate> s_template(CreateObjectTemplate());
 #else
-    static __thread v8::Persistent<v8::ObjectTemplate> s_template(CreateObjectTemplate());
+	static __thread v8::ObjectTemplate *s_template = NULL;
+	
+	if (!s_template) s_template = *CreateObjectTemplate();
 #endif
 #endif
-
 
     v8::Handle<v8::Object> instance = s_template->NewInstance();    
 
