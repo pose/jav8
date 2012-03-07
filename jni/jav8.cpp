@@ -776,7 +776,11 @@ JNIEXPORT jintArray JNICALL Java_lu_flier_script_V8Array_internalToIntArray
 
   for (size_t i=0; i<array->Length(); i++)
   {      
-    data[i] = array->Get(i)->Int32Value();
+    int value = array->Get(i)->Int32Value();
+
+    if (value != 0) {
+      data[i] = value;
+    }
   }
 
   pEnv->ReleasePrimitiveArrayCritical(buf, data, 0);
@@ -792,7 +796,11 @@ JNIEXPORT jlongArray JNICALL Java_lu_flier_script_V8Array_internalToLongArray
 
   for (size_t i=0; i<array->Length(); i++)
   {      
-    data[i] = array->Get(i)->NumberValue();
+    double value = array->Get(i)->NumberValue();
+
+    if (value != 0.0) {
+      data[i] = value;
+    }
   }
 
   pEnv->ReleasePrimitiveArrayCritical(buf, data, 0);
@@ -808,7 +816,11 @@ JNIEXPORT jshortArray JNICALL Java_lu_flier_script_V8Array_internalToShortArray
 
   for (size_t i=0; i<array->Length(); i++)
   {      
-    data[i] = array->Get(i)->Int32Value();
+    int value = array->Get(i)->Int32Value();
+
+    if (value != 0) {
+      data[i] = value;
+    }
   }
 
   pEnv->ReleasePrimitiveArrayCritical(buf, data, 0);
@@ -824,7 +836,11 @@ JNIEXPORT jdoubleArray JNICALL Java_lu_flier_script_V8Array_internalToDoubleArra
 
   for (size_t i=0; i<array->Length(); i++)
   {      
-    data[i] = array->Get(i)->NumberValue();
+    double value = array->Get(i)->NumberValue();
+
+    if (value != 0.0) {
+      data[i] = value;
+    }
   }
 
   pEnv->ReleasePrimitiveArrayCritical(buf, data, 0);
@@ -840,7 +856,11 @@ JNIEXPORT jfloatArray JNICALL Java_lu_flier_script_V8Array_internalToFloatArray
 
   for (size_t i=0; i<array->Length(); i++)
   {      
-    data[i] = array->Get(i)->NumberValue();
+    double value = array->Get(i)->NumberValue();
+
+    if (value != 0.0) {
+      data[i] = value;
+    }
   }
 
   pEnv->ReleasePrimitiveArrayCritical(buf, data, 0);
@@ -856,7 +876,9 @@ JNIEXPORT jbooleanArray JNICALL Java_lu_flier_script_V8Array_internalToBooleanAr
 
   for (size_t i=0; i<array->Length(); i++)
   {      
-    data[i] = array->Get(i)->IsTrue() ? JNI_TRUE : JNI_FALSE;
+    if (array->Get(i)->IsTrue()) {
+      data[i] = JNI_TRUE;
+    }
   }
 
   pEnv->ReleasePrimitiveArrayCritical(buf, data, 0);
@@ -872,9 +894,7 @@ JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToStringArra
   {      
     v8::Handle<v8::Value> value = array->Get(i);
 
-    if (value->IsNull() || value->IsUndefined()) {
-      pEnv->SetObjectArrayElement(dest, i, NULL);
-    } else {
+    if (!value->IsNull()) {
       v8::String::Utf8Value str(v8::Handle<v8::String>::Cast(value));
       pEnv->SetObjectArrayElement(dest, i, pEnv->NewStringUTF(*str));
     }
@@ -892,9 +912,7 @@ JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToDateArray
   {      
     v8::Handle<v8::Value> value = array->Get(i);
 
-    if (value->IsNull() || value->IsUndefined()) {
-      pEnv->SetObjectArrayElement(dest, i, NULL);
-    } else {
+    if (!value->IsNull()) {
       pEnv->SetObjectArrayElement(dest, i, env.NewDate(v8::Handle<v8::Date>::Cast(value)));
     }
   }
