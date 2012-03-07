@@ -283,6 +283,9 @@ public:
   jobject Wrap(v8::Handle<v8::Object> value);
   jobjectArray WrapArrayToNative(v8::Handle<v8::Value> obj);
   v8::Handle<v8::Value> Wrap(jobject value);
+  v8::Handle<v8::Value> WrapDate(jobject value);
+  v8::Handle<v8::Value> WrapV8Object(jobject value);
+  v8::Handle<v8::Value> WrapV8Array(jobject value);
 
   template <class T> v8::Local<T> Close(v8::Handle<T> value) { return handle_scope.Close(value); }
 };

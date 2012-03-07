@@ -5,6 +5,7 @@ import java.io.Reader;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Date;
 
 import javax.script.AbstractScriptEngine;
 import javax.script.Bindings;
@@ -50,7 +51,47 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
     public V8Array createArray(Object[] data) {
         return getV8Context().createArray(data);
     }
-        
+
+    public V8Array createArray(long[] data) {
+        return getV8Context().createArray(data);
+    }
+
+    public V8Array createArray(int[] data) {
+        return getV8Context().createArray(data);
+    }
+
+    public V8Array createArray(short[] data) {
+        return getV8Context().createArray(data);
+    }
+
+    public V8Array createArray(double[] data) {
+        return getV8Context().createArray(data);
+    }
+
+    public V8Array createArray(float[] data) {
+        return getV8Context().createArray(data);
+    }
+
+    public V8Array createArray(boolean[] data) {
+        return getV8Context().createArray(data);
+    }
+
+    public V8Array createArray(String[] data) {
+        return getV8Context().createArray(data);
+    }
+
+    public V8Array createArray(Date[] data) {
+        return getV8Context().createArray(data);
+    }
+
+    public V8Array createArray(V8Array[] data) {
+        return getV8Context().createArray(data);
+    }
+
+    public V8Array createArray(V8Object[] data) {
+        return getV8Context().createArray(data);
+    }
+
     private String readAll(Reader reader) throws IOException
     {
     	StringBuilder sb = new StringBuilder();

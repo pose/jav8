@@ -170,6 +170,86 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateArray
 
 /*
  * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateIntArray
+ * Signature: ([I)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateIntArray
+  (JNIEnv *, jobject, jintArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateStringArray
+ * Signature: ([Ljava/lang/String;)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateStringArray
+  (JNIEnv *, jobject, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateLongArray
+ * Signature: ([J)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateLongArray
+  (JNIEnv *, jobject, jlongArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateDoubleArray
+ * Signature: ([D)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateDoubleArray
+  (JNIEnv *, jobject, jdoubleArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateFloatArray
+ * Signature: ([F)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateFloatArray
+  (JNIEnv *, jobject, jfloatArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateShortArray
+ * Signature: ([S)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateShortArray
+  (JNIEnv *, jobject, jshortArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateBoolArray
+ * Signature: ([Z)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateBoolArray
+  (JNIEnv *, jobject, jbooleanArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateDateArray
+ * Signature: ([Ljava/util/Date;)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateDateArray
+  (JNIEnv *, jobject, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateV8ArrayArray
+ * Signature: ([Llu/flier/script/V8Array;)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateV8ArrayArray
+  (JNIEnv *, jobject, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateV8ObjectArray
+ * Signature: ([Llu/flier/script/V8Object;)Llu/flier/script/V8Array;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateV8ObjectArray
+  (JNIEnv *, jobject, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Context
  * Method:    internalCreate
  * Signature: ()J
  */
@@ -312,6 +392,86 @@ JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetElements
 
 /*
  * Class:     lu_flier_script_V8Array
+ * Method:    internalSetStringElements
+ * Signature: (J[Ljava/lang/Object;)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetStringElements
+  (JNIEnv *, jobject, jlong, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalSetIntElements
+ * Signature: (J[I)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetIntElements
+  (JNIEnv *, jobject, jlong, jintArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalSetLongElements
+ * Signature: (J[J)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetLongElements
+  (JNIEnv *, jobject, jlong, jlongArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalSetShortElements
+ * Signature: (J[S)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetShortElements
+  (JNIEnv *, jobject, jlong, jshortArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalSetDoubleElements
+ * Signature: (J[D)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetDoubleElements
+  (JNIEnv *, jobject, jlong, jdoubleArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalSetFloatElements
+ * Signature: (J[F)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetFloatElements
+  (JNIEnv *, jobject, jlong, jfloatArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalSetBooleanElements
+ * Signature: (J[Z)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetBooleanElements
+  (JNIEnv *, jobject, jlong, jbooleanArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalSetDateElements
+ * Signature: (J[Ljava/util/Date;)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetDateElements
+  (JNIEnv *, jobject, jlong, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalSetV8ArrayElements
+ * Signature: (J[Llu/flier/script/V8Array;)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetV8ArrayElements
+  (JNIEnv *, jobject, jlong, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalSetV8ObjectElements
+ * Signature: (J[Llu/flier/script/V8Object;)V
+ */
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetV8ObjectElements
+  (JNIEnv *, jobject, jlong, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
  * Method:    internalGetSize
  * Signature: (J)I
  */
@@ -325,6 +485,70 @@ JNIEXPORT jint JNICALL Java_lu_flier_script_V8Array_internalGetSize
  */
 JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToObjectArray
   (JNIEnv *, jobject, jlong);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalToIntArray
+ * Signature: (J[I)[I
+ */
+JNIEXPORT jintArray JNICALL Java_lu_flier_script_V8Array_internalToIntArray
+  (JNIEnv *, jobject, jlong, jintArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalToLongArray
+ * Signature: (J[J)[J
+ */
+JNIEXPORT jlongArray JNICALL Java_lu_flier_script_V8Array_internalToLongArray
+  (JNIEnv *, jobject, jlong, jlongArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalToShortArray
+ * Signature: (J[S)[S
+ */
+JNIEXPORT jshortArray JNICALL Java_lu_flier_script_V8Array_internalToShortArray
+  (JNIEnv *, jobject, jlong, jshortArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalToDoubleArray
+ * Signature: (J[D)[D
+ */
+JNIEXPORT jdoubleArray JNICALL Java_lu_flier_script_V8Array_internalToDoubleArray
+  (JNIEnv *, jobject, jlong, jdoubleArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalToFloatArray
+ * Signature: (J[F)[F
+ */
+JNIEXPORT jfloatArray JNICALL Java_lu_flier_script_V8Array_internalToFloatArray
+  (JNIEnv *, jobject, jlong, jfloatArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalToBooleanArray
+ * Signature: (J[Z)[Z
+ */
+JNIEXPORT jbooleanArray JNICALL Java_lu_flier_script_V8Array_internalToBooleanArray
+  (JNIEnv *, jobject, jlong, jbooleanArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalToStringArray
+ * Signature: (J[Ljava/lang/String;)[Ljava/lang/String;
+ */
+JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToStringArray
+  (JNIEnv *, jobject, jlong, jobjectArray);
+
+/*
+ * Class:     lu_flier_script_V8Array
+ * Method:    internalToDateArray
+ * Signature: (J[Ljava/util/Date;)[Ljava/util/Date;
+ */
+JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToDateArray
+  (JNIEnv *, jobject, jlong, jobjectArray);
 
 #ifdef __cplusplus
 }

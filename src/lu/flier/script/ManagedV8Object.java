@@ -7,6 +7,12 @@ class ManagedV8Object {
 		this.obj = obj;
 	}
 
+	public void release() {
+		this.internalRelease(this.obj);		
+		
+		this.obj = 0;
+    }
+
 	@Override
 	protected void finalize() throws Throwable {
 		super.finalize();

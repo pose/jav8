@@ -812,6 +812,30 @@ v8::Handle<v8::Value> V8Env::Wrap(jobject value)
   return ThrowIf(try_catch) ? v8::Handle<v8::Value>() : handle_scope.Close(result);
 }
 
+v8::Handle<v8::Value> V8Env::WrapDate(jobject value)
+{
+  v8::HandleScope handle_scope;
+  static jmethodID mid = GetMethodID(buildins.java.util.Date, "getTime", "()J");
+  v8::Handle<v8::Value> result = v8::Date::New(m_env->CallLongMethod(value, mid));
+  return ThrowIf(try_catch) ? v8::Handle<v8::Value>() : handle_scope.Close(result);
+}
+
+v8::Handle<v8::Value> V8Env::WrapV8Object(jobject value)
+{
+  v8::HandleScope handle_scope;
+  static jfieldID fid = GetFieldID(buildins.lu.flier.script.V8Object, "obj", "J");
+  v8::Handle<v8::Value> result = v8::Handle<v8::Object>((v8::Object *) m_env->GetLongField(value, fid));
+  return ThrowIf(try_catch) ? v8::Handle<v8::Value>() : handle_scope.Close(result);
+}
+
+v8::Handle<v8::Value> V8Env::WrapV8Array(jobject value)
+{
+  v8::HandleScope handle_scope;
+  static jfieldID fid = GetFieldID(buildins.lu.flier.script.V8Array, "obj", "J");
+  v8::Handle<v8::Value> result = v8::Handle<v8::Value>((v8::Array *) m_env->GetLongField(value, fid));
+  return ThrowIf(try_catch) ? v8::Handle<v8::Value>() : handle_scope.Close(result);
+}
+
 std::vector< v8::Handle<v8::Value> > V8Env::GetArray(jobjectArray array)
 {
   std::vector< v8::Handle<v8::Value> > items(m_env->GetArrayLength(array));

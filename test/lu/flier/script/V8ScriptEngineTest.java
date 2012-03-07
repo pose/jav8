@@ -570,7 +570,7 @@ public class V8ScriptEngineTest
     }
 
     @Test
-    public void testCreateArray() throws ScriptException {
+    public void testCreateAndSetArray() throws ScriptException {
     	V8Context ctxt = ((V8ScriptEngine) this.eng).getV8Context();
         Bindings g = this.eng.getBindings(ScriptContext.ENGINE_SCOPE);
         this.eng.eval("var arr;");
@@ -585,6 +585,128 @@ public class V8ScriptEngineTest
 
         arr.setElements(new Object[] { 456 });
         assertEquals(456, arr.get(0));
+
+        int[] intdata = new int[] { 123, 345 };
+        arr = ctxt.createArray(intdata);
+        assertEquals(2, arr.size());
+        assertEquals(123, arr.get(0));
+        assertEquals(345, arr.get(1));
+        arr.setElements(new int[] { 543, 321});
+        assertEquals(543, arr.get(0));
+        assertEquals(321, arr.get(1));
+        assertEquals(543, arr.toIntArray()[0]);
+        assertEquals(321, arr.toIntArray()[1]);
+
+        long[] longdata = new long[] { 123, 345 };
+        arr = ctxt.createArray(longdata);
+        assertEquals(2, arr.size());
+        assertEquals(123, arr.get(0));
+        assertEquals(345, arr.get(1));
+        arr.setElements(new long[] { 543, 321});
+        assertEquals(543, arr.get(0));
+        assertEquals(321, arr.get(1));
+        assertEquals(543, arr.toLongArray()[0]);
+        assertEquals(321, arr.toLongArray()[1]);
+
+        short[] shortdata = new short[] { 123, 345 };
+        arr = ctxt.createArray(shortdata);
+        assertEquals(2, arr.size());
+        assertEquals(123, arr.get(0));
+        assertEquals(345, arr.get(1));
+        arr.setElements(new short[] { 543, 321});
+        assertEquals(543, arr.get(0));
+        assertEquals(321, arr.get(1));
+        assertEquals(543, arr.toShortArray()[0]);
+        assertEquals(321, arr.toShortArray()[1]);
+
+        double[] doubledata = new double[] { 123.45, 345.12 };
+        arr = ctxt.createArray(doubledata);
+        assertEquals(2, arr.size());
+        assertTrue(Math.abs(((Double)arr.get(0)) - 123.45) < 0.01);
+        assertTrue(Math.abs(((Double)arr.get(1)) - 345.12) < 0.01);
+        arr.setElements(new double[] { 543.21, 321.12 });
+        assertTrue(Math.abs(((Double)arr.get(0)) - 543.21) < 0.01);
+        assertTrue(Math.abs(((Double)arr.get(1)) - 321.12) < 0.01);
+        assertTrue(Math.abs(((Double)arr.toDoubleArray()[0]) - 543.21) < 0.01);
+        assertTrue(Math.abs(((Double)arr.toDoubleArray()[1]) - 321.12) < 0.01);
+
+        float[] floatdata = new float[] { 123.45f, 345.12f };
+        arr = ctxt.createArray(floatdata);
+        assertEquals(2, arr.size());
+        assertTrue(Math.abs(((Double)arr.get(0)) - 123.45f) < 0.01);
+        assertTrue(Math.abs(((Double)arr.get(1)) - 345.12f) < 0.01);
+        arr.setElements(new float[] { 543.21f, 321.12f });
+        assertTrue(Math.abs(((Double)arr.get(0)) - 543.21f) < 0.01);
+        assertTrue(Math.abs(((Double)arr.get(1)) - 321.12f) < 0.01);
+        assertTrue(Math.abs(((Float)arr.toFloatArray()[0]) - 543.21f) < 0.01);
+        assertTrue(Math.abs(((Float)arr.toFloatArray()[1]) - 321.12f) < 0.01);
+
+        boolean[] booldata = new boolean[] { false, true };
+        arr = ctxt.createArray(booldata);
+        assertEquals(2, arr.size());
+        assertEquals(false, arr.get(0));
+        assertEquals(true, arr.get(1));
+        arr.setElements(new boolean[] { true, false});
+        assertEquals(true, arr.get(0));
+        assertEquals(false, arr.get(1));
+        assertEquals(true, arr.toBooleanArray()[0]);
+        assertEquals(false, arr.toBooleanArray()[1]);
+
+        String[] stringdata = new String[] { "hello", "this is a test", "of a system" };
+        arr = ctxt.createArray(stringdata);
+        assertEquals(3, arr.size());
+        assertEquals("hello", arr.get(0));
+        assertEquals("this is a test", arr.get(1));
+        assertEquals("of a system", arr.get(2));
+
+        arr.setElements(new String[] { "this is really", "going to test", "something new" });
+        assertEquals("this is really", arr.get(0));
+        assertEquals("going to test", arr.get(1));
+        assertEquals("something new", arr.get(2));
+        assertEquals("this is really", arr.toStringArray()[0]);
+        assertEquals("going to test", arr.toStringArray()[1]);
+        assertEquals("something new", arr.toStringArray()[2]);
+
+        Date[] datedata = new Date[] { new Date(123123), new Date(456456) };
+        arr = ctxt.createArray(datedata);
+        assertEquals(2, arr.size());
+        assertEquals(123123, ((Date)arr.get(0)).getTime());
+        assertEquals(456456, ((Date)arr.get(1)).getTime());
+        arr.setElements(new Date[] { new Date(333444), new Date(555666) });
+        assertEquals(333444, ((Date)arr.get(0)).getTime());
+        assertEquals(555666, ((Date)arr.get(1)).getTime());
+        assertEquals(333444, ((Date)arr.toDateArray()[0]).getTime());
+        assertEquals(555666, ((Date)arr.toDateArray()[1]).getTime());
+
+        V8Array innerArray1 = ctxt.createArray(new int[] { 1, 2, 3 });
+        V8Array innerArray2 = ctxt.createArray(new int[] { 3, 2, 1 });
+        arr = ctxt.createArray(new V8Array[] { innerArray1, innerArray2 });
+        assertEquals(2, arr.size());
+        assertEquals(1, ((V8Array)arr.get(0)).get(0));
+        assertEquals(2, ((V8Array)arr.get(0)).get(1));
+        assertEquals(3, ((V8Array)arr.get(0)).get(2));
+        assertEquals(3, ((V8Array)arr.get(1)).get(0));
+        assertEquals(2, ((V8Array)arr.get(1)).get(1));
+        assertEquals(1, ((V8Array)arr.get(1)).get(2));
+        arr.setElements(new V8Array[] { innerArray2, innerArray1 });
+        assertEquals(3, ((V8Array)arr.get(0)).get(0));
+        assertEquals(2, ((V8Array)arr.get(0)).get(1));
+        assertEquals(1, ((V8Array)arr.get(0)).get(2));
+        assertEquals(1, ((V8Array)arr.get(1)).get(0));
+        assertEquals(2, ((V8Array)arr.get(1)).get(1));
+        assertEquals(3, ((V8Array)arr.get(1)).get(2));
+
+        V8Object innerObj1 = ctxt.createObject();
+        innerObj1.put("foo", "bar");
+        V8Object innerObj2 = ctxt.createObject();
+        innerObj2.put("biz", "baz");
+        arr = ctxt.createArray(new V8Object[] { innerObj1, innerObj2 });
+        assertEquals(2, arr.size());
+        assertEquals("bar", ((V8Object)arr.get(0)).get("foo"));
+        assertEquals("baz", ((V8Object)arr.get(1)).get("biz"));
+        arr.setElements(new V8Object[] { innerObj2, innerObj1 });
+        assertEquals("baz", ((V8Object)arr.get(0)).get("biz"));
+        assertEquals("bar", ((V8Object)arr.get(1)).get("foo"));
     }
 
     @Test 
