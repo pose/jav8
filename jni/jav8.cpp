@@ -381,11 +381,16 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateStringArr
 
   for (size_t i = 0; i < size; i++) {
     jstring str = (jstring)pEnv->GetObjectArrayElement(source, i);
-    int length = pEnv->GetStringUTFLength(str);
-    const jchar *p = pEnv->GetStringCritical(str, NULL);
-    v8::Handle<v8::String> next = v8::String::New((const uint16_t *)p, length);
-    pEnv->ReleaseStringCritical(str, p);
-    array->Set(i, next);
+
+    if (str == NULL) {
+      array->Set(i, v8::Null());
+    } else {
+      int length = pEnv->GetStringUTFLength(str);
+      const jchar *p = pEnv->GetStringCritical(str, NULL);
+      v8::Handle<v8::String> next = v8::String::New((const uint16_t *)p, length);
+      pEnv->ReleaseStringCritical(str, p);
+      array->Set(i, next);
+    }
   }
 
   return env.NewV8Array(array);
@@ -400,7 +405,12 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateDateArray
 
   for (size_t i = 0; i < size; i++) {
     jobject jdate = pEnv->GetObjectArrayElement(source, i);
-    array->Set(i, env.WrapDate(jdate));
+
+    if (jdate == NULL) {
+      array->Set(i, v8::Null());
+    } else {
+      array->Set(i, env.WrapDate(jdate));
+    }
   }
 
   return env.NewV8Array(array);
@@ -415,7 +425,12 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateV8ArrayAr
 
   for (size_t i = 0; i < size; i++) {
     jobject jarr = pEnv->GetObjectArrayElement(source, i);
-    array->Set(i, env.WrapV8Array(jarr));
+
+    if (jarr == NULL) {
+      array->Set(i, v8::Null());
+    } else {
+      array->Set(i, env.WrapV8Array(jarr));
+    }
   }
 
   return env.NewV8Array(array);
@@ -430,7 +445,12 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateV8ObjectA
 
   for (size_t i = 0; i < size; i++) {
     jobject jobj = pEnv->GetObjectArrayElement(source, i);
-    array->Set(i, env.WrapV8Object(jobj));
+
+    if (jobj == NULL) {
+      array->Set(i, v8::Null());
+    } else {
+      array->Set(i, env.WrapV8Object(jobj));
+    }
   }
 
   return env.NewV8Array(array);
@@ -554,7 +574,12 @@ JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetDateElements
 
   for (size_t i = 0; i < size; i++) {
     jobject jdate = pEnv->GetObjectArrayElement(source, i);
-    array->Set(i, env.WrapDate(jdate));
+
+    if (jdate == NULL) {
+      array->Set(i, v8::Null());
+    } else {
+      array->Set(i, env.WrapDate(jdate));
+    }
   }
 }
 
@@ -567,7 +592,12 @@ JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetV8ArrayElements
 
   for (size_t i = 0; i < size; i++) {
     jobject jarr = pEnv->GetObjectArrayElement(source, i);
-    array->Set(i, env.WrapV8Array(jarr));
+
+    if (jarr == NULL) {
+      array->Set(i, v8::Null());
+    } else {
+      array->Set(i, env.WrapV8Array(jarr));
+    }
   }
 }
 
@@ -580,7 +610,12 @@ JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetV8ObjectElements
 
   for (size_t i = 0; i < size; i++) {
     jobject jobj = pEnv->GetObjectArrayElement(source, i);
-    array->Set(i, env.WrapV8Object(jobj));
+
+    if (jobj == NULL) {
+      array->Set(i, v8::Null());
+    } else {
+      array->Set(i, env.WrapV8Object(jobj));
+    }
   }
 }
 
@@ -592,11 +627,16 @@ JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetStringElements
 
   for (size_t i = 0; i < size; i++) {
     jstring str = (jstring)pEnv->GetObjectArrayElement(source, i);
-    int length = pEnv->GetStringUTFLength(str);
-    const jchar *p = pEnv->GetStringCritical(str, NULL);
-    v8::Handle<v8::String> next = v8::String::New((const uint16_t *)p, length);
-    pEnv->ReleaseStringCritical(str, p);
-    array->Set(i, next);
+
+    if (str == NULL) {
+      array->Set(i, v8::Null());
+    } else {
+      int length = pEnv->GetStringUTFLength(str);
+      const jchar *p = pEnv->GetStringCritical(str, NULL);
+      v8::Handle<v8::String> next = v8::String::New((const uint16_t *)p, length);
+      pEnv->ReleaseStringCritical(str, p);
+      array->Set(i, next);
+    }
   }
 }
 
@@ -830,8 +870,14 @@ JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToStringArra
 
   for (size_t i=0; i<array->Length(); i++)
   {      
-    v8::String::Utf8Value str(v8::Handle<v8::String>::Cast(array->Get(i)));
-    pEnv->SetObjectArrayElement(dest, i, pEnv->NewStringUTF(*str));
+    v8::Handle<v8::Value> value = array->Get(i);
+
+    if (value->IsNull() || value->IsUndefined()) {
+      pEnv->SetObjectArrayElement(dest, i, NULL);
+    } else {
+      v8::String::Utf8Value str(v8::Handle<v8::String>::Cast(value));
+      pEnv->SetObjectArrayElement(dest, i, pEnv->NewStringUTF(*str));
+    }
   }
 }
 
@@ -844,7 +890,13 @@ JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToDateArray
 
   for (size_t i=0; i<array->Length(); i++)
   {      
-    pEnv->SetObjectArrayElement(dest, i, env.NewDate(v8::Handle<v8::Date>::Cast(array->Get(i))));
+    v8::Handle<v8::Value> value = array->Get(i);
+
+    if (value->IsNull() || value->IsUndefined()) {
+      pEnv->SetObjectArrayElement(dest, i, NULL);
+    } else {
+      pEnv->SetObjectArrayElement(dest, i, env.NewDate(v8::Handle<v8::Date>::Cast(value)));
+    }
   }
 } 
 

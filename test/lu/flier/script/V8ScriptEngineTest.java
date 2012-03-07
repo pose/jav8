@@ -652,61 +652,71 @@ public class V8ScriptEngineTest
         assertEquals(true, arr.toBooleanArray()[0]);
         assertEquals(false, arr.toBooleanArray()[1]);
 
-        String[] stringdata = new String[] { "hello", "this is a test", "of a system" };
+        String[] stringdata = new String[] { "hello", "this is a test", "of a system", null };
         arr = ctxt.createArray(stringdata);
-        assertEquals(3, arr.size());
+        assertEquals(4, arr.size());
         assertEquals("hello", arr.get(0));
         assertEquals("this is a test", arr.get(1));
         assertEquals("of a system", arr.get(2));
+        assertEquals(null, arr.get(3));
 
-        arr.setElements(new String[] { "this is really", "going to test", "something new" });
+        arr.setElements(new String[] { "this is really", "going to test", "something new", null });
         assertEquals("this is really", arr.get(0));
         assertEquals("going to test", arr.get(1));
         assertEquals("something new", arr.get(2));
+        assertEquals(null, arr.get(3));
         assertEquals("this is really", arr.toStringArray()[0]);
         assertEquals("going to test", arr.toStringArray()[1]);
         assertEquals("something new", arr.toStringArray()[2]);
+        assertEquals(null, arr.toStringArray()[3]);
 
-        Date[] datedata = new Date[] { new Date(123123), new Date(456456) };
+        Date[] datedata = new Date[] { new Date(123123), new Date(456456), null };
         arr = ctxt.createArray(datedata);
-        assertEquals(2, arr.size());
+        assertEquals(3, arr.size());
         assertEquals(123123, ((Date)arr.get(0)).getTime());
         assertEquals(456456, ((Date)arr.get(1)).getTime());
-        arr.setElements(new Date[] { new Date(333444), new Date(555666) });
+        assertEquals(null, ((Date)arr.get(2)));
+        arr.setElements(new Date[] { new Date(333444), new Date(555666), null });
         assertEquals(333444, ((Date)arr.get(0)).getTime());
         assertEquals(555666, ((Date)arr.get(1)).getTime());
+        assertEquals(null, ((Date)arr.get(2)));
         assertEquals(333444, ((Date)arr.toDateArray()[0]).getTime());
         assertEquals(555666, ((Date)arr.toDateArray()[1]).getTime());
+        assertEquals(null, ((Date)arr.toDateArray()[2]));
 
         V8Array innerArray1 = ctxt.createArray(new int[] { 1, 2, 3 });
         V8Array innerArray2 = ctxt.createArray(new int[] { 3, 2, 1 });
-        arr = ctxt.createArray(new V8Array[] { innerArray1, innerArray2 });
-        assertEquals(2, arr.size());
+        arr = ctxt.createArray(new V8Array[] { innerArray1, innerArray2, null });
+        assertEquals(3, arr.size());
         assertEquals(1, ((V8Array)arr.get(0)).get(0));
         assertEquals(2, ((V8Array)arr.get(0)).get(1));
         assertEquals(3, ((V8Array)arr.get(0)).get(2));
         assertEquals(3, ((V8Array)arr.get(1)).get(0));
         assertEquals(2, ((V8Array)arr.get(1)).get(1));
         assertEquals(1, ((V8Array)arr.get(1)).get(2));
-        arr.setElements(new V8Array[] { innerArray2, innerArray1 });
+        assertEquals(null, ((V8Array)arr.get(2)));
+        arr.setElements(new V8Array[] { innerArray2, innerArray1, null });
         assertEquals(3, ((V8Array)arr.get(0)).get(0));
         assertEquals(2, ((V8Array)arr.get(0)).get(1));
         assertEquals(1, ((V8Array)arr.get(0)).get(2));
         assertEquals(1, ((V8Array)arr.get(1)).get(0));
         assertEquals(2, ((V8Array)arr.get(1)).get(1));
         assertEquals(3, ((V8Array)arr.get(1)).get(2));
+        assertEquals(null, ((V8Array)arr.get(2)));
 
         V8Object innerObj1 = ctxt.createObject();
         innerObj1.put("foo", "bar");
         V8Object innerObj2 = ctxt.createObject();
         innerObj2.put("biz", "baz");
-        arr = ctxt.createArray(new V8Object[] { innerObj1, innerObj2 });
-        assertEquals(2, arr.size());
+        arr = ctxt.createArray(new V8Object[] { innerObj1, innerObj2, null});
+        assertEquals(3, arr.size());
         assertEquals("bar", ((V8Object)arr.get(0)).get("foo"));
         assertEquals("baz", ((V8Object)arr.get(1)).get("biz"));
-        arr.setElements(new V8Object[] { innerObj2, innerObj1 });
+        assertEquals(null, ((V8Object)arr.get(2)));
+        arr.setElements(new V8Object[] { innerObj2, innerObj1, null });
         assertEquals("baz", ((V8Object)arr.get(0)).get("biz"));
         assertEquals("bar", ((V8Object)arr.get(1)).get("foo"));
+        assertEquals(null, ((V8Object)arr.get(2)));
     }
 
     @Test 
