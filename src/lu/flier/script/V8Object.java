@@ -120,4 +120,40 @@ public class V8Object extends ManagedV8Object implements Bindings, V8ContextAwar
 			this.put(entry.getKey(), entry.getValue());
 		}
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder("V8Object<" + this.obj + "> { ");
+		Set<Map.Entry<String, Object>> entrySet = this.entrySet();
+
+		int c = 0;
+
+		for (Map.Entry<String, Object> entry : this.entrySet()) {
+			String v = null;
+			Object val = entry.getValue();
+
+			if (val == null) {
+				v = "null";
+			} else if (val == this) {
+				v = "&self";
+			} else if (val instanceof V8Function) {
+				v = "V8Function";
+			} else if (val instanceof V8Object && (!(val instanceof V8Array))) {
+				V8Object vobj = (V8Object)val;
+				v = "V8Object<" + vobj.obj + ">";
+			} else {
+				v = val.toString();
+			}
+
+			buf.append(entry.getKey() + ": " + v);
+
+			if (c++ < entrySet.size() - 1) {
+				buf.append(", ");
+			}
+		}
+
+		buf.append(" }");
+
+		return buf.toString();
+	}
 }
