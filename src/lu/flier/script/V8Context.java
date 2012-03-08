@@ -73,48 +73,92 @@ public class V8Context extends SimpleScriptContext
         return (V8Object)internalCreateObject().bindTo(this);
     }
 
+    public V8Array createArray(Object[] contents, int length) {
+        return (V8Array)internalCreateArray(contents, length).bindTo(this);
+    }
+
+    public V8Array createArray(int[] contents, int length) {
+        return (V8Array)internalCreateIntArray(contents, length).bindTo(this);
+    }
+
+    public V8Array createArray(long[] contents, int length) {
+        return (V8Array)internalCreateLongArray(contents, length).bindTo(this);
+    }
+
+    public V8Array createArray(double[] contents, int length) {
+        return (V8Array)internalCreateDoubleArray(contents, length).bindTo(this);
+    }
+
+    public V8Array createArray(float[] contents, int length) {
+        return (V8Array)internalCreateFloatArray(contents, length).bindTo(this);
+    }
+
+    public V8Array createArray(short[] contents, int length) {
+        return (V8Array)internalCreateShortArray(contents, length).bindTo(this);
+    }
+
+    public V8Array createArray(boolean[] contents, int length) {
+        return (V8Array)internalCreateBoolArray(contents, length).bindTo(this);
+    }
+
+    public V8Array createArray(String[] contents, int length) {
+        return (V8Array)internalCreateStringArray(contents, length).bindTo(this);
+    }
+
+    public V8Array createArray(Date[] contents, int length) {
+        return (V8Array)internalCreateDateArray(contents, length).bindTo(this);
+    }
+
+    public V8Array createArray(V8Array[] contents, int length) {
+        return (V8Array)internalCreateV8ArrayArray(contents, length).bindTo(this);
+    }
+
+    public V8Array createArray(V8Object[] contents, int length) {
+        return (V8Array)internalCreateV8ObjectArray(contents, length).bindTo(this);
+    }
+
     public V8Array createArray(Object[] contents) {
-        return (V8Array)internalCreateArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
     public V8Array createArray(int[] contents) {
-        return (V8Array)internalCreateIntArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
     public V8Array createArray(long[] contents) {
-        return (V8Array)internalCreateLongArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
     public V8Array createArray(double[] contents) {
-        return (V8Array)internalCreateDoubleArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
     public V8Array createArray(float[] contents) {
-        return (V8Array)internalCreateFloatArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
     public V8Array createArray(short[] contents) {
-        return (V8Array)internalCreateShortArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
     public V8Array createArray(boolean[] contents) {
-        return (V8Array)internalCreateBoolArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
     public V8Array createArray(String[] contents) {
-        return (V8Array)internalCreateStringArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
     public V8Array createArray(Date[] contents) {
-        return (V8Array)internalCreateDateArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
     public V8Array createArray(V8Array[] contents) {
-        return (V8Array)internalCreateV8ArrayArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
     public V8Array createArray(V8Object[] contents) {
-        return (V8Array)internalCreateV8ObjectArray(contents).bindTo(this);
+        return createArray(contents, contents.length);
     }
 
 	public void dispose()
@@ -141,17 +185,17 @@ public class V8Context extends SimpleScriptContext
 	public native static V8Context getCalling();
 	public native static boolean inContext();
     public native V8Object internalCreateObject();
-    public native V8Array internalCreateArray(Object[] contents);
-    public native V8Array internalCreateIntArray(int[] contents);
-    public native V8Array internalCreateStringArray(String[] contents);
-    public native V8Array internalCreateLongArray(long[] contents);
-    public native V8Array internalCreateDoubleArray(double[] contents);
-    public native V8Array internalCreateFloatArray(float[] contents);
-    public native V8Array internalCreateShortArray(short[] contents);
-    public native V8Array internalCreateBoolArray(boolean[] contents);
-    public native V8Array internalCreateDateArray(Date[] contents);
-    public native V8Array internalCreateV8ArrayArray(V8Array[] contents);
-    public native V8Array internalCreateV8ObjectArray(V8Object[] contents);
+    public native V8Array internalCreateArray(Object[] contents, int length);
+    public native V8Array internalCreateIntArray(int[] contents, int length);
+    public native V8Array internalCreateStringArray(String[] contents, int length);
+    public native V8Array internalCreateLongArray(long[] contents, int length);
+    public native V8Array internalCreateDoubleArray(double[] contents, int length);
+    public native V8Array internalCreateFloatArray(float[] contents, int length);
+    public native V8Array internalCreateShortArray(short[] contents, int length);
+    public native V8Array internalCreateBoolArray(boolean[] contents, int length);
+    public native V8Array internalCreateDateArray(Date[] contents, int length);
+    public native V8Array internalCreateV8ArrayArray(V8Array[] contents, int length);
+    public native V8Array internalCreateV8ObjectArray(V8Object[] contents, int length);
 	
 	public void enter()
 	{

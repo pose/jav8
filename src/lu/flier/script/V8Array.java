@@ -40,125 +40,201 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
 
     @Override
     public Object[] toArray() {
-        return internalToObjectArray(array.obj);
+        return internalToObjectArray(array.obj, this.size());
+    }
+
+    public int[] toIntArray(int length) {
+        int[] buf = new int[length];
+        internalToIntArray(array.obj, buf, length);
+        return buf;
     }
 
     public int[] toIntArray() {
-        int[] buf = new int[this.size()];
-        internalToIntArray(array.obj, buf);
+        return toIntArray(this.size());
+    }
+
+    public long[] toLongArray(int length) {
+        long[] buf = new long[length];
+        internalToLongArray(array.obj, buf, length);
         return buf;
     }
 
     public long[] toLongArray() {
-        long[] buf = new long[this.size()];
-        internalToLongArray(array.obj, buf);
+        return toLongArray(this.size());
+    }
+
+    public short[] toShortArray(int length) {
+        short[] buf = new short[length];
+        internalToShortArray(array.obj, buf, length);
         return buf;
     }
 
     public short[] toShortArray() {
-        short[] buf = new short[this.size()];
-        internalToShortArray(array.obj, buf);
+        return toShortArray(this.size());
+    }
+
+    public double[] toDoubleArray(int length) {
+        double[] buf = new double[length];
+        internalToDoubleArray(array.obj, buf, length);
         return buf;
     }
 
     public double[] toDoubleArray() {
-        double[] buf = new double[this.size()];
-        internalToDoubleArray(array.obj, buf);
+        return toDoubleArray(this.size());
+    }
+
+    public float[] toFloatArray(int length) {
+        float[] buf = new float[length];
+        internalToFloatArray(array.obj, buf, length);
         return buf;
     }
 
     public float[] toFloatArray() {
-        float[] buf = new float[this.size()];
-        internalToFloatArray(array.obj, buf);
+        return toFloatArray(this.size());
+    }
+
+    public boolean[] toBooleanArray(int length) {
+        boolean[] buf = new boolean[length];
+        internalToBooleanArray(array.obj, buf, length);
         return buf;
     }
 
     public boolean[] toBooleanArray() {
-        boolean[] buf = new boolean[this.size()];
-        internalToBooleanArray(array.obj, buf);
+        return toBooleanArray(this.size());
+    }
+
+    public String[] toStringArray(int length) {
+        String[] buf = new String[length];
+        internalToStringArray(array.obj, buf, length);
         return buf;
     }
 
     public String[] toStringArray() {
-        String[] buf = new String[this.size()];
-        internalToStringArray(array.obj, buf);
+        return toStringArray(this.size());
+    }
+
+    public Date[] toDateArray(int length) {
+        Date[] buf = new Date[length];
+        internalToDateArray(array.obj, buf, length);
         return buf;
     }
 
     public Date[] toDateArray() {
-        Date[] buf = new Date[this.size()];
-        internalToDateArray(array.obj, buf);
-        return buf;
+        return toDateArray(this.size());
     }
 
 	public void release() {
         this.array.release();
     }
 
+    public void setElements(Object[] elements, int length) {
+        this.internalSetElements(this.obj, elements, length);
+    }
+
+    public void setElements(int[] elements, int length) {
+        this.internalSetIntElements(this.obj, elements, length);
+    }
+
+    public void setElements(long[] elements, int length) {
+        this.internalSetLongElements(this.obj, elements, length);
+    }
+
+    public void setElements(short[] elements, int length) {
+        this.internalSetShortElements(this.obj, elements, length);
+    }
+
+    public void setElements(double[] elements, int length) {
+        this.internalSetDoubleElements(this.obj, elements, length);
+    }
+
+    public void setElements(float[] elements, int length) {
+        this.internalSetFloatElements(this.obj, elements, length);
+    }
+
+    public void setElements(boolean[] elements, int length) {
+        this.internalSetBooleanElements(this.obj, elements, length);
+    }
+
+    public void setElements(Date[] elements, int length) {
+        this.internalSetDateElements(this.obj, elements, length);
+    }
+
+    public void setElements(V8Array[] elements, int length) {
+        this.internalSetV8ArrayElements(this.obj, elements, length);
+    }
+
+    public void setElements(V8Object[] elements, int length) {
+        this.internalSetV8ObjectElements(this.obj, elements, length);
+    }
+
+    public void setElements(String[] elements, int length) {
+        this.internalSetStringElements(this.obj, elements, length);
+    }
+
     public void setElements(Object[] elements) {
-        this.internalSetElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
     public void setElements(int[] elements) {
-        this.internalSetIntElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
     public void setElements(long[] elements) {
-        this.internalSetLongElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
     public void setElements(short[] elements) {
-        this.internalSetShortElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
     public void setElements(double[] elements) {
-        this.internalSetDoubleElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
     public void setElements(float[] elements) {
-        this.internalSetFloatElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
     public void setElements(boolean[] elements) {
-        this.internalSetBooleanElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
     public void setElements(Date[] elements) {
-        this.internalSetDateElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
     public void setElements(V8Array[] elements) {
-        this.internalSetV8ArrayElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
     public void setElements(V8Object[] elements) {
-        this.internalSetV8ObjectElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
     public void setElements(String[] elements) {
-        this.internalSetStringElements(this.obj, elements);
+        this.setElements(elements, elements.length);
     }
 
 	private native Object internalGet(long obj, int index);
-	private native void internalSetElements(long obj, Object[] elements);
-	private native void internalSetStringElements(long obj, Object[] elements);
-    private native void internalSetIntElements(long obj, int[] elements);
-    private native void internalSetLongElements(long obj, long[] elements);
-    private native void internalSetShortElements(long obj, short[] elements);
-    private native void internalSetDoubleElements(long obj, double[] elements);
-    private native void internalSetFloatElements(long obj, float[] elements);
-    private native void internalSetBooleanElements(long obj, boolean[] elements);
-    private native void internalSetDateElements(long obj, Date[] elements);
-    private native void internalSetV8ArrayElements(long obj, V8Array[] elements);
-    private native void internalSetV8ObjectElements(long obj, V8Object[] elements);
+	private native void internalSetElements(long obj, Object[] elements, int length);
+	private native void internalSetStringElements(long obj, Object[] elements, int length);
+    private native void internalSetIntElements(long obj, int[] elements, int length);
+    private native void internalSetLongElements(long obj, long[] elements, int length);
+    private native void internalSetShortElements(long obj, short[] elements, int length);
+    private native void internalSetDoubleElements(long obj, double[] elements, int length);
+    private native void internalSetFloatElements(long obj, float[] elements, int length);
+    private native void internalSetBooleanElements(long obj, boolean[] elements, int length);
+    private native void internalSetDateElements(long obj, Date[] elements, int length);
+    private native void internalSetV8ArrayElements(long obj, V8Array[] elements, int length);
+    private native void internalSetV8ObjectElements(long obj, V8Object[] elements, int length);
 	private native int internalGetSize(long obj);
-	private native Object[] internalToObjectArray(long obj);
-    private native int[] internalToIntArray(long obj, int[] buf);
-    private native long[] internalToLongArray(long obj, long[] buf);
-    private native short[] internalToShortArray(long obj, short[] buf);
-    private native double[] internalToDoubleArray(long obj, double[] buf);
-    private native float[] internalToFloatArray(long obj, float[] buf);
-    private native boolean[] internalToBooleanArray(long obj, boolean[] buf);
-    private native String[] internalToStringArray(long obj, String[] buf);
-    private native Date[] internalToDateArray(long obj, Date[] buf);
+	private native Object[] internalToObjectArray(long obj, int length);
+    private native int[] internalToIntArray(long obj, int[] buf, int length);
+    private native long[] internalToLongArray(long obj, long[] buf, int length);
+    private native short[] internalToShortArray(long obj, short[] buf, int length);
+    private native double[] internalToDoubleArray(long obj, double[] buf, int length);
+    private native float[] internalToFloatArray(long obj, float[] buf, int length);
+    private native boolean[] internalToBooleanArray(long obj, boolean[] buf, int length);
+    private native String[] internalToStringArray(long obj, String[] buf, int length);
+    private native Date[] internalToDateArray(long obj, Date[] buf, int length);
 }
