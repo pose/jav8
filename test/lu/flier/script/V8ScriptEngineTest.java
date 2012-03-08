@@ -585,6 +585,8 @@ public class V8ScriptEngineTest
 
         arr.setElements(new Object[] { 456 });
         assertEquals(456, arr.get(0));
+        arr.set(0, 789);
+        assertEquals(789, arr.get(0));
 
         int[] intdata = new int[] { 123, 345 };
         arr = ctxt.createArray(intdata);

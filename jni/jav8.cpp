@@ -517,8 +517,19 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateV8ObjectA
   return env.NewV8Array(array);
 }
 
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Array_internalSet
+  (JNIEnv *pEnv, jobject, jlong pArray, jint index, jobject element) 
+{
+  jni::V8Env env(pEnv);
+
+  v8::Persistent<v8::Array> array((v8::Array *)pArray);
+
+  array->Set(index, env.Wrap(element));
+}
+
 JNIEXPORT void JNICALL Java_lu_flier_script_V8Array_internalSetElements
-  (JNIEnv *pEnv, jobject, jlong pArray, jobjectArray elements, jint length) {
+  (JNIEnv *pEnv, jobject, jlong pArray, jobjectArray elements, jint length) 
+{
   jni::V8Env env(pEnv);
 
   v8::Persistent<v8::Array> array((v8::Array *)pArray);

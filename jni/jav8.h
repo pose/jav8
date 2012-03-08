@@ -384,6 +384,14 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Array_internalGet
 
 /*
  * Class:     lu_flier_script_V8Array
+ * Method:    internalSet
+ * Signature: (JILjava/lang/Object;)Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Array_internalSet
+  (JNIEnv *, jobject, jlong, jint, jobject);
+
+/*
+ * Class:     lu_flier_script_V8Array
  * Method:    internalSetElements
  * Signature: (J[Ljava/lang/Object;I)V
  */

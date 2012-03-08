@@ -34,6 +34,11 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
 	}
 
 	@Override
+	public Object set(int index, Object value) {
+		return internalSet(array.obj, index, value);
+	}
+
+	@Override
 	public int size() {
 		return internalGetSize(array.obj);
 	}
@@ -216,6 +221,7 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
     }
 
 	private native Object internalGet(long obj, int index);
+	private native Object internalSet(long obj, int index, Object val);
 	private native void internalSetElements(long obj, Object[] elements, int length);
 	private native void internalSetStringElements(long obj, Object[] elements, int length);
     private native void internalSetIntElements(long obj, int[] elements, int length);
