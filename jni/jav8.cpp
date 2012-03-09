@@ -912,7 +912,7 @@ JNIEXPORT jintArray JNICALL Java_lu_flier_script_V8Array_internalToIntArray
 
   jint *data = (jint *)(pEnv->GetPrimitiveArrayCritical(buf, 0));
 
-  for (size_t i=0; i<array->Length(); i++)
+  for (size_t i=0; i<length; i++)
   {      
     int value = array->Get(i)->Int32Value();
 
@@ -932,7 +932,7 @@ JNIEXPORT jlongArray JNICALL Java_lu_flier_script_V8Array_internalToLongArray
 
   jlong *data = (jlong *)(pEnv->GetPrimitiveArrayCritical(buf, 0));
 
-  for (size_t i=0; i<array->Length(); i++)
+  for (size_t i=0; i<length; i++)
   {      
     double value = array->Get(i)->NumberValue();
 
@@ -952,7 +952,7 @@ JNIEXPORT jshortArray JNICALL Java_lu_flier_script_V8Array_internalToShortArray
 
   jshort *data = (jshort *)(pEnv->GetPrimitiveArrayCritical(buf, 0));
 
-  for (size_t i=0; i<array->Length(); i++)
+  for (size_t i=0; i<length; i++)
   {      
     int value = array->Get(i)->Int32Value();
 
@@ -972,7 +972,7 @@ JNIEXPORT jdoubleArray JNICALL Java_lu_flier_script_V8Array_internalToDoubleArra
 
   jdouble *data = (jdouble *)(pEnv->GetPrimitiveArrayCritical(buf, 0));
 
-  for (size_t i=0; i<array->Length(); i++)
+  for (size_t i=0; i<length; i++)
   {      
     double value = array->Get(i)->NumberValue();
 
@@ -992,7 +992,7 @@ JNIEXPORT jfloatArray JNICALL Java_lu_flier_script_V8Array_internalToFloatArray
 
   jfloat *data = (jfloat *)(pEnv->GetPrimitiveArrayCritical(buf, 0));
 
-  for (size_t i=0; i<array->Length(); i++)
+  for (size_t i=0; i<length; i++)
   {      
     double value = array->Get(i)->NumberValue();
 
@@ -1012,7 +1012,7 @@ JNIEXPORT jbooleanArray JNICALL Java_lu_flier_script_V8Array_internalToBooleanAr
 
   jboolean *data = (jboolean *)(pEnv->GetPrimitiveArrayCritical(buf, 0));
 
-  for (size_t i=0; i<array->Length(); i++)
+  for (size_t i=0; i<length; i++)
   {      
     if (array->Get(i)->IsTrue()) {
       data[i] = JNI_TRUE;
@@ -1027,10 +1027,11 @@ JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToStringArra
 {
   v8::HandleScope handleScope;
   v8::Handle<v8::Array> array((v8::Array *)pArray);
+  v8::Handle<v8::Value> value;
 
-  for (size_t i=0; i<array->Length(); i++)
+  for (size_t i=0; i<length; i++)
   {      
-    v8::Handle<v8::Value> value = array->Get(i);
+    value = array->Get(i);
 
     if (!value->IsNull()) {
       v8::String::Utf8Value str(v8::Handle<v8::String>::Cast(value));
@@ -1046,7 +1047,7 @@ JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToDateArray
   v8::HandleScope handleScope;
   v8::Handle<v8::Array> array((v8::Array *)pArray);
 
-  for (size_t i=0; i<array->Length(); i++)
+  for (size_t i=0; i<length; i++)
   {      
     v8::Handle<v8::Value> value = array->Get(i);
 

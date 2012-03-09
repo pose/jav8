@@ -49,7 +49,10 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
     }
 
     public int[] toIntArray(int length) {
-        int[] buf = new int[length];
+        return toIntArray(new int[length], length);
+    }
+
+    public int[] toIntArray(int[] buf, int length) {
         internalToIntArray(array.obj, buf, length);
         return buf;
     }
@@ -59,7 +62,10 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
     }
 
     public long[] toLongArray(int length) {
-        long[] buf = new long[length];
+        return toLongArray(new long[length], length);
+    }
+
+    public long[] toLongArray(long[] buf, int length) {
         internalToLongArray(array.obj, buf, length);
         return buf;
     }
@@ -69,7 +75,10 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
     }
 
     public short[] toShortArray(int length) {
-        short[] buf = new short[length];
+        return toShortArray(new short[length], length);
+    }
+
+    public short[] toShortArray(short[] buf, int length) {
         internalToShortArray(array.obj, buf, length);
         return buf;
     }
@@ -79,7 +88,10 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
     }
 
     public double[] toDoubleArray(int length) {
-        double[] buf = new double[length];
+        return toDoubleArray(new double[length], length);
+    }
+
+    public double[] toDoubleArray(double[] buf, int length) {
         internalToDoubleArray(array.obj, buf, length);
         return buf;
     }
@@ -89,7 +101,10 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
     }
 
     public float[] toFloatArray(int length) {
-        float[] buf = new float[length];
+        return toFloatArray(new float[length], length);
+    }
+
+    public float[] toFloatArray(float[] buf, int length) {
         internalToFloatArray(array.obj, buf, length);
         return buf;
     }
@@ -99,7 +114,10 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
     }
 
     public boolean[] toBooleanArray(int length) {
-        boolean[] buf = new boolean[length];
+        return toBooleanArray(new boolean[length], length);
+    }
+
+    public boolean[] toBooleanArray(boolean[] buf, int length) {
         internalToBooleanArray(array.obj, buf, length);
         return buf;
     }
@@ -109,7 +127,10 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
     }
 
     public String[] toStringArray(int length) {
-        String[] buf = new String[length];
+        return toStringArray(new String[length], length);
+    }
+
+    public String[] toStringArray(String[] buf, int length) {
         internalToStringArray(array.obj, buf, length);
         return buf;
     }
@@ -119,7 +140,10 @@ public class V8Array extends AbstractList<Object> implements V8ContextAware {
     }
 
     public Date[] toDateArray(int length) {
-        Date[] buf = new Date[length];
+        return toDateArray(new Date[length], length);
+    }
+
+    public Date[] toDateArray(Date[] buf, int length) {
         internalToDateArray(array.obj, buf, length);
         return buf;
     }
