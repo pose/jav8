@@ -1084,3 +1084,14 @@ jobject JNICALL Java_lu_flier_script_V8Function_internalInvoke
 
   return env.Wrap(result);
 }
+
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Function_internalInvokeVoid
+  (JNIEnv *pEnv, jobject pObj, jlong pFunc) {
+  v8::HandleScope handleScope;
+
+  v8::Persistent<v8::Function> func((v8::Function *)pFunc);
+  v8::Handle<v8::Object> thiz = v8::Context::GetCurrent()->Global();
+  func->Call(thiz, 0, NULL);
+
+  return NULL;
+}

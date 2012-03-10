@@ -122,7 +122,7 @@ public class V8ScriptEngineTest
     				  "	 this.say = function (you) {" +
     				  "    return me + ' say, hello ' + you; }" +
     				  "}" +
-    				  "var me = new Person('Flier');");
+    				  "var me = new Person('Flier'); var vFunc = function() { }");
     	    	
     	assertEquals("Hello Flier", invocable.invokeFunction("hello", "Flier"));
     	
@@ -140,8 +140,11 @@ public class V8ScriptEngineTest
     	V8Context ctxt = ((V8ScriptEngine) this.eng).getV8Context();
     	    	
 		V8Object me = (V8Object) ctxt.getGlobal().get("me");
-		
 		assertNotNull(me);
+
+        V8Function voidFunc = (V8Function) ctxt.getGlobal().get("vFunc");
+		assertNotNull(voidFunc);
+        voidFunc.invokeVoid();
 	
 		assertEquals("Flier say, hello baby", invocable.invokeMethod(me, "say", "baby"));
 		

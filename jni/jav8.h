@@ -577,6 +577,14 @@ extern "C" {
 JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Function_internalInvoke
   (JNIEnv *, jobject, jlong, jlong, jobjectArray);
 
+/*
+ * Class:     lu_flier_script_V8Function
+ * Method:    internalInvokeVoid
+ * Signature: (J)Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Function_internalInvokeVoid
+  (JNIEnv *, jobject, jlong);
+
 #ifdef __cplusplus
 }
 #endif

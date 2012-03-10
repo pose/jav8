@@ -21,5 +21,13 @@ public class V8Function extends V8Object
 		return result == null ? null : this.ctxt.bind(result);
 	}
 
+    /**
+     * Invokes a void, argument-less function in a high performance manner.
+     */
+	public void invokeVoid() {
+		internalInvokeVoid(this.obj);
+	}
+
 	private native Object internalInvoke(long obj, long thiz, Object[] args);
+	private native Object internalInvokeVoid(long obj);
 }
