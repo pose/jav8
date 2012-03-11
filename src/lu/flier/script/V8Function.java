@@ -24,10 +24,14 @@ public class V8Function extends V8Object
     /**
      * Invokes a void, argument-less function in a high performance manner.
      */
-	public void invokeVoid() {
-		internalInvokeVoid(this.obj);
+	public void invokeVoid(Object... args) {
+        if (args.length == 0) {
+            internalInvokeVoid(this.obj, null);
+        } else {
+            internalInvokeVoid(this.obj, args);
+        }
 	}
 
 	private native Object internalInvoke(long obj, long thiz, Object[] args);
-	private native Object internalInvokeVoid(long obj);
+	private native void internalInvokeVoid(long obj, Object[] args);
 }

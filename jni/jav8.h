@@ -588,10 +588,10 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Function_internalInvoke
 /*
  * Class:     lu_flier_script_V8Function
  * Method:    internalInvokeVoid
- * Signature: (J)Ljava/lang/Object;
+ * Signature: (J[Ljava/lang/Object;)V
  */
-JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Function_internalInvokeVoid
-  (JNIEnv *, jobject, jlong);
+JNIEXPORT void JNICALL Java_lu_flier_script_V8Function_internalInvokeVoid
+  (JNIEnv *, jobject, jlong, jobjectArray);
 
 #ifdef __cplusplus
 }
