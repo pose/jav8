@@ -286,6 +286,7 @@ public:
   v8::Handle<v8::Value> WrapDate(jobject value);
   v8::Handle<v8::Value> WrapV8Object(jobject value);
   v8::Handle<v8::Value> WrapV8Array(jobject value);
+  v8::Handle<v8::Function> WrapBoundMethod(jobject value, jmethodID mid, bool is_void, bool has_args);
 
   template <class T> v8::Local<T> Close(v8::Handle<T> value) { return handle_scope.Close(value); }
 };

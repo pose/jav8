@@ -517,6 +517,24 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateV8ObjectA
   return env.NewV8Array(array);
 }
 
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateV8Function
+  (JNIEnv *pEnv, jobject, jobject thiz, jclass thizClass, jstring name, jstring signature,
+   jboolean is_void, jboolean has_args) {
+  jni::V8Env env(pEnv);
+
+  const char *cname = pEnv->GetStringUTFChars(name, NULL);
+  const char *csignature = pEnv->GetStringUTFChars(signature, NULL);
+
+  jmethodID mid = pEnv->GetMethodID(thizClass, cname, csignature);
+
+  pEnv->ReleaseStringUTFChars(name, cname);
+  pEnv->ReleaseStringUTFChars(signature, csignature);
+
+  v8::Handle<v8::Function> func = env.WrapBoundMethod(thiz, mid, is_void == JNI_TRUE, has_args == JNI_TRUE);
+
+  return env.NewV8Function(func);
+}
+
 JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Array_internalSet
   (JNIEnv *pEnv, jobject, jlong pArray, jint index, jobject element) 
 {

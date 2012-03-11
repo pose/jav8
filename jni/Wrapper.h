@@ -300,6 +300,52 @@ public:
   static v8::Handle<v8::Value> Caller(const v8::Arguments& args);
 };
 
+class CJavaBoundMethod {  
+  JNIEnv *m_pEnv;
+  jobject m_thiz;
+  jmethodID m_mid;
+  bool m_is_void;
+  bool m_has_args;
+
+  bool CanConvert(jclass clazz, v8::Handle<v8::Value> value);
+public:
+  CJavaBoundMethod(JNIEnv *pEnv, jobject thiz, jmethodID mid, bool is_void, bool has_args) 
+    : m_pEnv(pEnv), m_thiz(m_pEnv->NewGlobalRef(thiz)), m_mid(mid), m_is_void(is_void), m_has_args(has_args)
+  {
+  }
+
+  virtual ~CJavaBoundMethod(void)
+  {
+    m_pEnv->DeleteGlobalRef(m_thiz);
+  }
+
+  JNIEnv *GetEnv(void) { return m_pEnv; }
+  jobject GetThiz(void) { return m_thiz; }
+  jmethodID GetMid(void) { return m_mid; }
+  bool IsVoid(void) { return m_is_void; }
+  bool HasArgs(void) { return m_has_args; }
+
+  static v8::Handle<v8::Function> Wrap(JNIEnv *pEnv, jobject thiz, jmethodID mid, bool is_void, bool has_args)
+  {
+    jni::V8Env env(pEnv);
+
+    v8::Handle<v8::FunctionTemplate> func_tmpl = v8::FunctionTemplate::New();    
+
+    CJavaBoundMethod *func = new CJavaBoundMethod(pEnv, thiz, mid, is_void, has_args);
+
+    func_tmpl->SetCallHandler(Caller, v8::External::New(func));
+
+    v8::Handle<v8::Function> instance = func_tmpl->GetFunction();
+
+    ObjectTracer<CJavaBoundMethod>::Trace(instance, func);
+
+    return env.Close(instance);
+  }
+
+  static v8::Handle<v8::Value> Caller(const v8::Arguments& args);
+};
+
+
 class CJavaContext : public CBaseJavaObject<CJavaContext> {
   typedef CBaseJavaObject<CJavaContext> __base__;
 public:

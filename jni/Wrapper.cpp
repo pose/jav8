@@ -274,6 +274,52 @@ v8::Handle<v8::Value> CJavaFunction::Caller(const v8::Arguments& args)
 
   return env.Close(env.Wrap(result));  
 }
+
+v8::Handle<v8::Value> CJavaBoundMethod::Caller(const v8::Arguments& args) 
+{
+  CJavaBoundMethod& func = *static_cast<CJavaBoundMethod *>(v8::Handle<v8::External>::Cast(args.Data())->Value());
+
+  JNIEnv *pEnv = func.GetEnv();
+  jobject thiz = func.GetThiz();
+  jmethodID mid = func.GetMid();
+
+  if (func.HasArgs()) 
+  {
+    jni::V8Env env(func.GetEnv());
+    
+    jobjectArray params = (jobjectArray) env.NewObjectArray(args.Length());
+
+    for (size_t i=0; i<args.Length(); i++)
+    {
+      env->SetObjectArrayElement(params, i, env.Wrap(args[i]));
+    }
+
+    if (func.IsVoid()) 
+    {
+      pEnv->CallVoidMethod(thiz, mid, params);
+      return v8::Null();
+    } 
+    else 
+    {
+      jobject result = pEnv->CallObjectMethod(thiz, mid, params);
+      return env.Wrap(result);
+    }
+  } 
+  else 
+  {
+    if (func.IsVoid()) 
+    {
+      pEnv->CallVoidMethod(thiz, mid);
+      return v8::Null();
+    } 
+    else 
+    {
+      jni::V8Env env(func.GetEnv());
+      jobject result = pEnv->CallObjectMethod(thiz, mid);
+      return env.Wrap(result);
+    }
+  }
+}
 /*
 v8::Handle<v8::Value> CJavaContext::NamedGetter(
   v8::Local<v8::String> prop, const v8::AccessorInfo& info)

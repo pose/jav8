@@ -836,6 +836,13 @@ v8::Handle<v8::Value> V8Env::WrapV8Array(jobject value)
   return ThrowIf(try_catch) ? v8::Handle<v8::Value>() : handle_scope.Close(result);
 }
 
+v8::Handle<v8::Function> V8Env::WrapBoundMethod(jobject thiz, jmethodID mid, bool is_void, bool has_args)
+{
+  v8::HandleScope handle_scope;
+  v8::Handle<v8::Function> result = CJavaBoundMethod::Wrap(m_env, thiz, mid, is_void, has_args);
+  return ThrowIf(try_catch) ? v8::Handle<v8::Function>() : handle_scope.Close(result);
+}
+
 std::vector< v8::Handle<v8::Value> > V8Env::GetArray(jobjectArray array)
 {
   std::vector< v8::Handle<v8::Value> > items(m_env->GetArrayLength(array));

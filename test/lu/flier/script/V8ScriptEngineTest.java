@@ -153,6 +153,64 @@ public class V8ScriptEngineTest
 		assertNotNull(person);
 		assertEquals("Flier say, hello baby", person.say("baby"));
     }    
+
+    public class TestFunc {
+        public int count = 0;
+
+        public void increment() {
+            count++;
+        }
+
+        public Object incrementBy(Object[] args) {
+            count += (Integer)args[0];
+            return count;
+        }
+
+        public void incrementByVoid(Object[] args) {
+            count += (Integer)args[0];
+        }
+
+        public Object getFortyTwo() {
+            return 42;
+        }
+    }
+
+    @Test
+    public void testCreateBoundV8Function() throws ScriptException, NoSuchMethodException {
+        TestFunc c = new TestFunc();
+        
+        V8ScriptEngine eng = (V8ScriptEngine)this.eng;
+        V8Function f = eng.createFunction(c, "increment");
+        this.eng.eval("var f");
+    	Bindings g = this.eng.getBindings(ScriptContext.ENGINE_SCOPE);
+        g.put("f", f);
+        CompiledScript s = ((Compilable)this.eng).compile("f()");
+        s.eval(); s.eval(); s.eval();
+        assertEquals(c.count, 3);
+
+        c.count = 0;
+        f = eng.createFunction(c, "incrementBy");
+        s = ((Compilable)this.eng).compile("f(10)");
+        g.put("f", f);
+
+        assertEquals(s.eval(), 10);
+        assertEquals(s.eval(), 20);
+        assertEquals(c.count, 20);
+
+        c.count = 0;
+        f = eng.createFunction(c, "incrementByVoid");
+        s = ((Compilable)this.eng).compile("f(3)");
+        g.put("f", f);
+        assertEquals(s.eval(), null);
+        assertEquals(s.eval(), null);
+        assertEquals(c.count, 6);
+
+        f = eng.createFunction(c, "getFortyTwo");
+        s = ((Compilable)this.eng).compile("f()");
+        g.put("f", f);
+        assertEquals(s.eval(), 42);
+        assertEquals(s.eval(), 42);
+    }
     
     @Test
     public void testEngineBindings() throws ScriptException

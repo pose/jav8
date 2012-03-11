@@ -92,6 +92,10 @@ public final class V8ScriptEngine extends AbstractScriptEngine implements Invoca
         return getV8Context().createArray(data);
     }
 
+    public V8Function createFunction(Object thiz, String name) throws NoSuchMethodException {
+        return getV8Context().createFunction(thiz, name);
+    }
+
     private String readAll(Reader reader) throws IOException
     {
     	StringBuilder sb = new StringBuilder();

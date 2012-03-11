@@ -3,6 +3,7 @@ package lu.flier.script;
 import javax.script.Bindings;
 import javax.script.SimpleScriptContext;
 import java.util.Date;
+import java.lang.reflect.*;
 
 public class V8Context extends SimpleScriptContext
 {
@@ -117,6 +118,55 @@ public class V8Context extends SimpleScriptContext
         return (V8Array)internalCreateV8ObjectArray(contents, length).bindTo(this);
     }
 
+    public V8Function createFunction(Object thiz, String name) throws NoSuchMethodException {
+        Class klass = thiz.getClass();
+        Method method = null;
+
+        try {
+            method = klass.getMethod(name, Object[].class);
+        } catch (NoSuchMethodException e) {
+        }
+
+        boolean hasArgs;
+        boolean isVoid;
+        String argSig;
+        String signature;
+
+        if (method != null) {
+            hasArgs = true;
+            argSig = "([Ljava/lang/Object;)";
+        } else {
+            try {
+                method = klass.getMethod(name);
+            } catch (NoSuchMethodException e) {
+            }
+
+            if (method == null) {
+                throw new NoSuchMethodException("No method " + name + " found on class " + klass.getName() + ". " +
+                                                "Note this method must accept either no arguments or a single Object[].");
+            } else {
+                hasArgs = false;
+                argSig = "()";
+            }
+        }
+
+        Class returnType = method.getReturnType();
+
+        if (returnType == void.class) {
+            isVoid = true;
+            signature = argSig + "V";
+        } else if (returnType == Object.class) {
+            isVoid = false;
+            signature = argSig + "Ljava/lang/Object;";
+        } else {
+            throw new NoSuchMethodException("Method " + name + " found on class " + klass.getName() + " must " +
+                                            "be void or return an Object in order to be bound to a javascript function. " + 
+                                            "Current return type is " + returnType);
+        }
+
+        return (V8Function)internalCreateV8Function(thiz, thiz.getClass(), name, signature, isVoid, hasArgs).bindTo(this);
+    }
+
     public V8Array createArray(Object[] contents) {
         return createArray(contents, contents.length);
     }
@@ -196,6 +246,7 @@ public class V8Context extends SimpleScriptContext
     public native V8Array internalCreateDateArray(Date[] contents, int length);
     public native V8Array internalCreateV8ArrayArray(V8Array[] contents, int length);
     public native V8Array internalCreateV8ObjectArray(V8Object[] contents, int length);
+    public native V8Function internalCreateV8Function(Object thiz, Class thizClass, String name, String signature, boolean isVoid, boolean hasArgs);
 	
 	public void enter()
 	{

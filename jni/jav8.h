@@ -250,6 +250,14 @@ JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateV8ObjectA
 
 /*
  * Class:     lu_flier_script_V8Context
+ * Method:    internalCreateV8Function
+ * Signature: (Ljava/lang/Object;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;ZZ)Llu/flier/script/V8Function;
+ */
+JNIEXPORT jobject JNICALL Java_lu_flier_script_V8Context_internalCreateV8Function
+  (JNIEnv *, jobject, jobject, jclass, jstring, jstring, jboolean, jboolean);
+
+/*
+ * Class:     lu_flier_script_V8Context
  * Method:    internalCreate
  * Signature: ()J
  */
