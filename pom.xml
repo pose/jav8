@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>lu.flier.script</groupId>
+  <artifactId>jav8</artifactId>
+  <version>0.4-SNAPSHOT</version>
+  <name>jav8</name>
+
+  <packaging>nar</packaging>
+
+  <properties>
+      <nar-version-number>2.1-SNAPSHOT</nar-version-number>
+  </properties>
+
+    <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-nar-plugin</artifactId>
+        <version>${nar-version-number}</version>
+        <extensions>true</extensions>
+                <configuration>
+          <libraries>
+            <library>
+              <type>jni</type>
+            </library>
+          </libraries>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <pluginRepositories>
+  <pluginRepository>
+      <id>duns</id>
+      <name>Maven NAR Plugin Repo</name>
+      <url>http://duns.github.com/maven-snapshots</url>
+      <layout>default</layout>
+  </pluginRepository>
+  </pluginRepositories>
+
+</project>
