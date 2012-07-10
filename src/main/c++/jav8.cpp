@@ -24,7 +24,7 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
 
 void JNICALL JNI_OnUnload(JavaVM *vm, void *reserved)
 {
-
+  v8::V8::Dispose();
 }
 
 void JNICALL Java_lu_flier_script_ManagedV8Object_internalRelease
