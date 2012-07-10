@@ -1,44 +1,83 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>lu.flier.script</groupId>
   <artifactId>jav8</artifactId>
   <version>0.4-SNAPSHOT</version>
   <name>jav8</name>
-
   <packaging>nar</packaging>
-
   <properties>
-      <nar-version-number>2.1-SNAPSHOT</nar-version-number>
+    <nar.version.number>2.1-SNAPSHOT</nar.version.number>
+    <!-- this is required for the nar-maven-plugin (it takes
+         the tests and runs them in the nar:nar-integration-test
+         phase -->
+    <skipTests>true</skipTests>
   </properties>
-
-    <build>
+  <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-nar-plugin</artifactId>
-        <version>${nar-version-number}</version>
+        <version>${nar.version.number}</version>
         <extensions>true</extensions>
-                <configuration>
+        <configuration>
           <libraries>
             <library>
               <type>jni</type>
+              <!-- This is how the generated .h files prefix would be -->
+              <narSystemPackage>lu.flier.script</narSystemPackage>
             </library>
           </libraries>
+          <cpp>
+            <systemIncludePaths>
+              <!-- v8 includes -->
+              <systemIncludePath>
+              ${v8.path}/include</systemIncludePath>
+            </systemIncludePaths>
+            <defines>
+                <!-- Convert the array content when wrap it 
+                     (not working for me yet :( ) -->
+                <!-- <define>USE_NATIVE_ARRAY</define> -->
+
+                <!-- Hack: Use V8 Internal stuff in the native libraries 
+                     not working for me, I think it is attached to an older 
+                     version and code changed -->
+                <!-- <define>USE_INTERNAL_V8_API</define> -->
+
+                <!-- V8 Isolate Support --> 
+                <define>V8_SUPPORT_ISOLATE</define>
+            </defines>
+          </cpp>
+          <linker>
+            <libs>
+              <lib>
+                <!-- v8 lib, "-lv8" -->
+                <name>v8</name>
+                <directory>${v8.path}/out/native</directory>
+              </lib>
+            </libs>
+          </linker>
         </configuration>
       </plugin>
     </plugins>
   </build>
-
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.9</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
   <pluginRepositories>
-  <pluginRepository>
+    <pluginRepository>
       <id>duns</id>
       <name>Maven NAR Plugin Repo</name>
       <url>http://duns.github.com/maven-snapshots</url>
       <layout>default</layout>
-  </pluginRepository>
+    </pluginRepository>
   </pluginRepositories>
-
 </project>
