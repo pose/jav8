@@ -46,7 +46,8 @@ void JNICALL Java_lu_flier_script_V8ScriptEngine_gc
   #ifdef USE_INTERNAL_V8_API
     HEAP->CollectAllAvailableGarbage();
   #else
-    // TODO throw a exception
+    // See: http://www.my-ride-home.com/2011/01/v8-garbage-collection/
+    while(!v8::V8::IdleNotification()) {};
   #endif
 }
 
