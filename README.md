@@ -12,7 +12,7 @@ The idea behind this project is to provide V8 as a JVM Scripting Engine (aka JSR
 ### Original Repositories
 
 This is my fork from [Flier Lu](https://github.com/flier)'s project. This is [a link to the original svn repository](http://code.google.com/p/jav8/). 
-Another interesting fork [can be found here](https://github.com/gfodor/jav8) by [gfodor](https://github.com/gfodor).
+Another interesting fork [can be found here](https://github.com/gfodor/jav8) by [Greg Fodor](https://github.com/gfodor).
 
 ## Install/Build
 
