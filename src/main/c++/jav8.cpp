@@ -1057,6 +1057,9 @@ JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToStringArra
       pEnv->SetObjectArrayElement(dest, i, pEnv->NewStringUTF(*str));
     }
   }
+
+  //TODO Method should be void
+  return NULL;
 }
 
 JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToDateArray
@@ -1074,6 +1077,9 @@ JNIEXPORT jobjectArray JNICALL Java_lu_flier_script_V8Array_internalToDateArray
       pEnv->SetObjectArrayElement(dest, i, env.NewDate(v8::Handle<v8::Date>::Cast(value)));
     }
   }
+
+  //TODO Method should be void
+  return NULL;
 } 
 
 jint JNICALL Java_lu_flier_script_V8Array_internalGetSize
