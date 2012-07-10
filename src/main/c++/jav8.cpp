@@ -85,7 +85,7 @@ jobject JNICALL Java_lu_flier_script_V8ScriptEngineFactory_getParameter(JNIEnv *
   if (name == "javax.script.language_version")
     return pEnv->NewStringUTF("1.8.5");
   if (name == "jav8.native_array")  
-  #if USE_NATIVE_ARRAY
+  #ifdef USE_NATIVE_ARRAY
     return env.NewBoolean(true);
   #else
     return env.NewBoolean(false);
