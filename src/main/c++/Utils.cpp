@@ -9,8 +9,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "Config.h"
-
 #ifdef USE_INTERNAL_V8_API
   #undef COMPILER
   #include <src/v8.h>
@@ -23,11 +21,11 @@ namespace jni {
 #ifdef _MSC_VER
   Cache::caches_t *Cache::s_caches = NULL;
 #else
-# ifdef __APPLE__
-  pthread_key_t Cache::s_caches_key = NULL;
-# else
+#ifdef __APPLE__
+  pthread_key_t Cache::s_caches_key = {0};
+#else
   __thread Cache::caches_t *Cache::s_caches = NULL;
-# endif
+#endif
 #endif
 
 Cache& Cache::GetInstance(JNIEnv *env)
@@ -234,7 +232,7 @@ Cache::members_t::iterator Cache::CacheMembers(jclass clazz)
     jobjectArray fields = (jobjectArray) env->CallObjectMethod(clazz, midGetFields);
 
     static jmethodID midGetFieldName = env.GetMethodID(buildins.java.lang.reflect.Field, "getName", "()Ljava/lang/String;");
-    for (size_t i=0; i<env->GetArrayLength(fields); i++)
+    for (int i=0; i<env->GetArrayLength(fields); i++)
     {
       jobject field = env->GetObjectArrayElement(fields, i);
 
@@ -250,7 +248,7 @@ Cache::members_t::iterator Cache::CacheMembers(jclass clazz)
 
     static jmethodID midGetMethodName = env.GetMethodID(buildins.java.lang.reflect.Method, "getName", "()Ljava/lang/String;");
 
-    for (size_t i=0; i<env->GetArrayLength(methods); i++)
+    for (int i=0; i<env->GetArrayLength(methods); i++)
     {
       jobject method = env->GetObjectArrayElement(methods, i);
 
@@ -578,7 +576,7 @@ jobject Env::NewDate(v8::Handle<v8::Date> date)
 {
   static jmethodID cid = GetMethodID(buildins.java.util.Date, "<init>", "(J)V");
 
-  jlong value = floor(date->NumberValue());
+  jlong value = (jlong) floor(date->NumberValue());
   return m_env->NewObject(buildins.java.util.Date, cid, value);  
 }
 

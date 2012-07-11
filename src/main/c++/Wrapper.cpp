@@ -185,7 +185,7 @@ jobject CJavaFunction::GetMethod(const v8::Arguments& args)
     {      
       const types_t& types = m_methods[i].second;
 
-      if (types.size() == args.Length())
+      if (types.size() == ((unsigned)args.Length()))
       {
         bool same = true;
 
@@ -262,7 +262,7 @@ v8::Handle<v8::Value> CJavaFunction::Caller(const v8::Arguments& args)
   
   jobjectArray params = (jobjectArray) env.NewObjectArray(args.Length());
 
-  for (size_t i=0; i<args.Length(); i++)
+  for (int i=0; i<args.Length(); i++)
   {
     env->SetObjectArrayElement(params, i, env.Wrap(args[i]));
   }
@@ -289,7 +289,7 @@ v8::Handle<v8::Value> CJavaBoundMethod::Caller(const v8::Arguments& args)
     
     jobjectArray params = (jobjectArray) env.NewObjectArray(args.Length());
 
-    for (size_t i=0; i<args.Length(); i++)
+    for (int i=0; i<args.Length(); i++)
     {
       env->SetObjectArrayElement(params, i, env.Wrap(args[i]));
     }

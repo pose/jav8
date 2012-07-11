@@ -9,8 +9,6 @@
 
 #include <v8.h>
 
-#include "Config.h"
-
 #ifdef _WIN32
 
 #ifndef _USE_32BIT_TIME_T

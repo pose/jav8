@@ -164,7 +164,7 @@ protected:
     v8::TryCatch try_catch;
 
 #ifdef __APPLE__
-    static pthread_key_t s_object_template_key = NULL;
+    static pthread_key_t s_object_template_key = {0};
 
     if (!s_object_template_key) {
         pthread_key_create(&s_object_template_key, NULL);
